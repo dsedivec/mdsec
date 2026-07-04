@@ -16,7 +16,7 @@ Maintaining section numbers in Markdown by hand is error-prone: rearranging sect
 
 ## Approach
 
-Node + TypeScript CLI. Parse with `unified` + `remark-parse` + `remark-gfm`; the mdast tree is used read-only for its byte-offset positions. The document is never serialized from the AST — edits are collected as `{start, end, replacement}` spans and spliced into the original text in descending-offset order. Anchors are computed with `github-slugger` to match GitHub exactly, including duplicate `-1`/`-2` suffixes.
+Node + TypeScript CLI. Parse with `unified` + `remark-parse` + `remark-gfm` + `remark-frontmatter` (YAML); the mdast tree is used read-only for its byte-offset positions. The document is never serialized from the AST — edits are collected as `{start, end, replacement}` spans and spliced into the original text in descending-offset order. Anchors are computed with `github-slugger` to match GitHub exactly, including duplicate `-1`/`-2` suffixes.
 
 ### Pipeline
 
@@ -33,9 +33,17 @@ Node + TypeScript CLI. Parse with `unified` + `remark-parse` + `remark-gfm`; the
 
 Headings inside blockquotes are never modified, never numbered, excluded from the TOC, and not link-rewrite targets — but they **are** fed to the slugger, because GitHub renders them as real headings with anchors, so duplicate-slug suffixes of real headings must account for them.
 
+### Title inference (default min level)
+
+Unless `--min-level` is given explicitly, the minimum numbering level is inferred:
+
+- YAML front matter with a `title:` attribute → the title lives in front matter, so **all H1s are numbered** top-level sections (min level 1).
+- No front-matter title, but **multiple H1s** → no single plausible document title; H1s are numbered (min level 1).
+- No front-matter title and exactly **one H1** → it is the document title; numbering starts at H2 (min level 2).
+
 ### Numbering rules
 
-- Hierarchical dotted numbers, configurable min/max heading level (default 2–6).
+- Hierarchical dotted numbers, configurable min/max heading level (default: inferred min level, see above; max 6).
 - Numbers restart when levels pop (…2.3.1 → 3.).
 - Skipped levels (H2 → H4) number as if the missing level had one implicit entry; a warning is emitted.
 - **Idempotence invariant:** running the tool on its own output is a no-op.
@@ -47,7 +55,7 @@ mdsec [options] [FILE]
 ```
 
 - No FILE or `-`: stdin → stdout filter. With FILE: stdout unless `--write`/`-w` (in place).
-- `--min-level N`, `--max-level N` — numbering range (default 2–6).
+- `--min-level N`, `--max-level N` — numbering range (default: min inferred from front-matter title / H1 count, max 6).
 - `--toc-depth N` — TOC depth (default: numbering range).
 - `--link-text-pattern REGEX` — override numbered-reference pattern.
 - `--check` — exit nonzero if changes would be made; writes nothing.
@@ -57,6 +65,6 @@ mdsec [options] [FILE]
 
 ## Testing
 
-- Vitest fixture pairs (`test/fixtures/<case>/input.md` → `expected.md`): initial numbering, renumber after move, anchor rewrite, link-text rewrite variants, fuzzy matching, TOC generate/update, code-block safety, setext headings, duplicate slugs, blockquote exclusion + slug dedup.
+- Vitest fixture pairs (`test/fixtures/<case>/input.md` → `expected.md`): initial numbering, renumber after move, anchor rewrite, link-text rewrite variants, fuzzy matching, TOC generate/update, code-block safety, setext headings, duplicate slugs, blockquote exclusion + slug dedup, title inference (front-matter title, single H1, multiple H1s).
 - Idempotence property test across all fixtures.
 - Slug tests cross-checked against GitHub's actual behavior for tricky titles (punctuation, emoji, duplicates).
