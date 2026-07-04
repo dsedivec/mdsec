@@ -15,6 +15,12 @@ describe("link rewriting", () => {
       "# T\n\n## 1. Beta\n\n## 2. Alpha\n\nSee [section 1](#1-beta), [§1](#1-beta), [1 Beta](#1-beta), and [Beta](#1-beta).\n",
     );
   });
+  it("rewrites lettered leading section tokens (appendix renumbering) but not bare words", () => {
+    const src =
+      "# T\n\n## Appendix B. Backups\n\n### B.1 Restore\n\n[B.1 Restore](#b1-restore)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("[A.1 Restore](#a1-restore)");
+  });
   it("warns on unresolvable links and leaves them alone", () => {
     const src = "# T\n\n## Alpha\n\n[gone](#nope)\n";
     const r = runDocument(src, {});
