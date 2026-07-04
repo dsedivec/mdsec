@@ -43,11 +43,11 @@ npm run mdsec -- --check "$file" || {
 }
 ```
 
-Other flags: `--min-level N` / `--max-level N` (default: inferred — level 1 if
-the document has a title in front matter or more than one H1, else level 2),
-`--toc-depth N`, `--link-text-pattern REGEX` (capture group 1 = the number in
-custom link text), `--strict` (with `--check`, also fail on warnings), `-v`
-verbose warnings.
+Other flags: `--min-level N` (default: inferred — level 1 if the document has
+a title in front matter or more than one H1, else level 2), `--max-level N`
+(default: 6), `--toc-depth N`, `--link-text-pattern REGEX` (capture group 1 =
+the number in custom link text), `--strict` (with `--check`, also fail on
+warnings), `-v` verbose warnings.
 
 ## Config file
 
