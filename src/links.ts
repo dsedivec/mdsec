@@ -100,7 +100,10 @@ function resolve(
   const candidates = model.sections.filter((s) => !s.inBlockquote);
 
   // 2) bare-title slug match (fragment may or may not carry a number token)
-  const stripped = frag.replace(/^(?:appendix-)?(?:[a-z]|\d+)(?:\d+)*(?:-\d+)*-/, "");
+  const stripped = frag.replace(
+    /^(?:appendix-[a-z]+-|(?:[a-z]+(?=\d)|\d+)[a-z0-9]*(?:-\d+)*-)/,
+    "",
+  );
   const titleMatches = candidates.filter((s) => {
     const slug = new GithubSlugger().slug(s.bareTitle);
     return slug === frag || slug === stripped;
@@ -117,7 +120,7 @@ function resolve(
     .sort((a, b) => b.score - a.score);
   const best = scored[0];
   if (best && best.score >= 0.8) {
-    if (scored[1] && best.score - scored[1].score < 0.05) {
+    if (scored[1] && scored[1].score >= 0.8 && best.score - scored[1].score < 0.05) {
       warnings.push(`ambiguous internal link "#${frag}"; left unchanged`);
       return null;
     }

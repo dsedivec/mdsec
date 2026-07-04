@@ -58,4 +58,26 @@ describe("fuzzy link resolution", () => {
     expect(r.output).toContain("(#alpha-nomc)");
     expect(r.warnings.some((w) => /ambiguous/i.test(w))).toBe(true);
   });
+  it("resolves (not ambiguous) when only the best score clears the 0.8 threshold and the runner-up doesn't, even though within 0.05 of it", () => {
+    // dice("alpha-beta-gamma-delta-epsilon", "alpha-beta-gamm-delta-esion") = 0.833 (>= 0.8)
+    // dice("alpha-beta-gamma-delta-epsilon", "aph-bta-gamma-deltaepsilon")  = 0.792 (< 0.8)
+    // gap is ~0.042 (< 0.05), so under the old rule this fell into "ambiguous";
+    // under the fixed rule only two candidates *both* >= 0.8 count as ambiguous.
+    const src =
+      "# T\n\n## Alpha Beta Gamm Delta Esion\n\n## Aph Bta Gamma Deltaepsilon\n\n[x](#alpha-beta-gamma-delta-epsilon)\n";
+    const r = runDocument(src, {});
+    expect(r.warnings.some((w) => /ambiguous/i.test(w))).toBe(false);
+    expect(r.warnings.some((w) => /fuzzy/i.test(w))).toBe(true);
+    expect(r.output).toContain("(#1-alpha-beta-gamm-delta-esion)");
+  });
+  it("does not strip a lone leading article letter from a bare-title fragment", () => {
+    // "a-quick-guide-to-things" must not be treated as a "a-" section-token
+    // prefix over bare title "Quick Guide" (which would wrongly strip to
+    // "quick-guide-to-things"); nor is it fuzzy-similar enough (dice ~0.62)
+    // to "quick-guide" to resolve via similarity, so it must stay unresolved.
+    const src = "# T\n\n## Quick Guide\n\n[x](#a-quick-guide-to-things)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("(#a-quick-guide-to-things)");
+    expect(r.warnings.some((w) => w.includes("#a-quick-guide-to-things"))).toBe(true);
+  });
 });
