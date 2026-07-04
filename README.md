@@ -76,3 +76,7 @@ Add a placeholder anywhere in the document:
 
 `mdsec` replaces everything between the markers with a nested list of links
 to each numbered heading (down to `--toc-depth`, default: `maxLevel`).
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).
