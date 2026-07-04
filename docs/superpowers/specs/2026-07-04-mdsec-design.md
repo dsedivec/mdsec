@@ -48,6 +48,13 @@ Unless `--min-level` is given explicitly, the minimum numbering level is inferre
 - Skipped levels (H2 → H4) number as if the missing level had one implicit entry; a warning is emitted.
 - **Idempotence invariant:** running the tool on its own output is a no-op.
 
+### Appendices
+
+- A top-level section (at the inferred min level) whose title begins with the word `Appendix` (case-insensitive) starts appendix mode: it and all subsequent top-level sections are lettered `A`, `B`, `C`… (then `AA`…), with subsections `A.1`, `A.1.1`, etc.
+- Rendered as `## Appendix A. Title` at the top level (letter follows the word "Appendix"); subsections use the plain prefix form (`### A.1 Title`).
+- A non-appendix-titled top-level section appearing after an appendix is still lettered, with a warning (appendices are expected to come last).
+- The number-prefix regex accepts lettered components (`^([A-Z]+(\.\d+)*)\.?\s+` and the `Appendix X.` form) so re-runs strip and recompute correctly; link-fragment and link-text rewriting (`section A.2`, `§A.1.3`, leading `A.1 …`) work identically to numeric sections.
+
 ## CLI
 
 ```
@@ -65,6 +72,6 @@ mdsec [options] [FILE]
 
 ## Testing
 
-- Vitest fixture pairs (`test/fixtures/<case>/input.md` → `expected.md`): initial numbering, renumber after move, anchor rewrite, link-text rewrite variants, fuzzy matching, TOC generate/update, code-block safety, setext headings, duplicate slugs, blockquote exclusion + slug dedup, title inference (front-matter title, single H1, multiple H1s).
+- Vitest fixture pairs (`test/fixtures/<case>/input.md` → `expected.md`): initial numbering, renumber after move, anchor rewrite, link-text rewrite variants, fuzzy matching, TOC generate/update, code-block safety, setext headings, duplicate slugs, blockquote exclusion + slug dedup, title inference (front-matter title, single H1, multiple H1s), appendices (lettering, `Appendix A.` rendering, links into appendices, re-run idempotence).
 - Idempotence property test across all fixtures.
 - Slug tests cross-checked against GitHub's actual behavior for tricky titles (punctuation, emoji, duplicates).
