@@ -120,8 +120,20 @@ export function buildModel(
       finalBare = finalBare.replace(/^appendix\s+/i, "");
     }
 
-    const prefixEnd =
-      finalBare !== oldText ? textStart + (oldText.length - finalBare.length) : null;
+    let prefixEnd: number | null = null;
+    if (finalBare !== oldText) {
+      const prefixLen = oldText.length - finalBare.length;
+      const candidateEnd = textStart + prefixLen;
+      const firstChildIsPlainText = firstChild?.type === "text";
+      const rawSlice = source.slice(textStart, candidateEnd);
+      const strippedSlice = oldText.slice(0, prefixLen);
+      if (firstChildIsPlainText && rawSlice === strippedSlice) {
+        prefixEnd = candidateEnd;
+      } else {
+        finalBare = oldText;
+        warnings.push(`formatted markup around section number in "${oldText}"; not stripping it`);
+      }
+    }
 
     sections.push({
       level: node.depth,

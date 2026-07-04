@@ -36,6 +36,20 @@ describe("buildModel", () => {
     expect(m.sections[2].newPath).toEqual(["1", "1"]);
   });
 
+  it("does not strip prefix when inline markup surrounds the section number", () => {
+    const m = doc("# T\n\n## **3.** Alpha\n");
+    expect(m.sections[1].prefixEnd).toBeNull();
+    expect(m.sections[1].bareTitle).toBe(m.sections[1].oldText);
+    expect(m.warnings.some((w) => w.includes("3. Alpha"))).toBe(true);
+  });
+
+  it("does not strip appendix word when wrapped in inline markup", () => {
+    const m = doc("# T\n\n## *Appendix* Backups\n");
+    expect(m.sections[1].prefixEnd).toBeNull();
+    expect(m.sections[1].bareTitle).toBe(m.sections[1].oldText);
+    expect(m.warnings.some((w) => w.includes("Appendix Backups"))).toBe(true);
+  });
+
   it("appendix mode letters top-level sections", () => {
     const m = doc("# T\n\n## Intro\n\n## Appendix Backups\n\n### Restore\n\n## Appendix Formats\n");
     expect(m.sections.map((s) => s.newPath)).toEqual([null, ["1"], ["A"], ["A", "1"], ["B"]]);
