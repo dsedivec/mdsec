@@ -24,4 +24,13 @@ describe("toc", () => {
     const r = runDocument(src, {});
     expect(r.warnings.some((w) => /toc/i.test(w))).toBe(true);
   });
+  it("does not crash when stale TOC content has internal links that resolve", () => {
+    const src =
+      "# T\n\n<!-- toc -->\n- [Alpha](#alpha)\n<!-- /toc -->\n\n## Alpha\n\n### Sub\n";
+    expect(() => runDocument(src, {})).not.toThrow();
+    const r = runDocument(src, {});
+    expect(r.output).toBe(
+      "# T\n\n<!-- toc -->\n- [1. Alpha](#1-alpha)\n  - [1.1 Sub](#11-sub)\n<!-- /toc -->\n\n## 1. Alpha\n\n### 1.1 Sub\n",
+    );
+  });
 });

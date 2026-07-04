@@ -19,8 +19,11 @@ export interface RunResult {
 
 export function runDocument(source: string, opts: RunOptions): RunResult {
   const model = buildModel(source, opts);
-  const links = linkEdits(model, source, { linkTextPattern: opts.linkTextPattern });
   const toc = tocEdits(model, source, { tocDepth: opts.tocDepth });
+  const links = linkEdits(model, source, {
+    linkTextPattern: opts.linkTextPattern,
+    excludeRanges: toc.region ? [toc.region] : [],
+  });
   const edits = [...renumberEdits(model), ...links.edits, ...toc.edits];
   const output = applyEdits(source, edits);
   return {

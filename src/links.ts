@@ -17,10 +17,16 @@ interface LinkNode {
 export function linkEdits(
   model: DocModel,
   source: string,
-  opts: { linkTextPattern?: string } = {},
+  opts: {
+    linkTextPattern?: string;
+    excludeRanges?: { start: number; end: number }[];
+  } = {},
 ): { edits: Edit[]; warnings: string[] } {
   const edits: Edit[] = [];
   const warnings: string[] = [];
+  const excludeRanges = opts.excludeRanges ?? [];
+  const isExcluded = (offset: number) =>
+    excludeRanges.some((r) => offset >= r.start && offset < r.end);
   const newAnchors = computeNewAnchors(model);
   const byOldAnchor = new Map<string, Section>();
   for (const s of model.sections) {
@@ -43,6 +49,7 @@ export function linkEdits(
   })(model.tree);
 
   for (const node of links) {
+    if (isExcluded(node.position.start.offset)) continue;
     const frag = node.url.slice(1);
     const target = resolve(frag, byOldAnchor, model, warnings);
     if (!target) continue;

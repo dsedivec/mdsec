@@ -6,12 +6,16 @@ import { formatPrefix } from "./number.js";
 const OPEN_MARKER = "<!-- toc -->";
 const CLOSE_MARKER = "<!-- /toc -->";
 
-export function tocEdits(
+export interface TocRegion {
+  start: number;
+  end: number;
+}
+
+export function findTocRegion(
   model: DocModel,
   source: string,
-  opts: { tocDepth?: number } = {},
-): { edits: Edit[]; warnings: string[] } {
-  const warnings: string[] = [];
+  warnings: string[] = [],
+): TocRegion | null {
   let open: any = null;
   let close: any = null;
   let combined: any = null;
@@ -33,23 +37,38 @@ export function tocEdits(
     }
   }
 
-  let start: number;
-  let end: number;
-
   if (combined) {
-    start = combined.position.start.offset + OPEN_MARKER.length;
-    end = combined.position.end.offset - CLOSE_MARKER.length;
+    return {
+      start: combined.position.start.offset + OPEN_MARKER.length,
+      end: combined.position.end.offset - CLOSE_MARKER.length,
+    };
   } else if (open && close) {
-    start = open.position.end.offset;
-    end = close.position.start.offset;
+    return {
+      start: open.position.end.offset,
+      end: close.position.start.offset,
+    };
   } else if (open && !close) {
     warnings.push(
       "found <!-- toc --> without matching <!-- /toc -->; skipping TOC",
     );
-    return { edits: [], warnings };
-  } else {
-    return { edits: [], warnings };
+    return null;
   }
+  return null;
+}
+
+export function tocEdits(
+  model: DocModel,
+  source: string,
+  opts: { tocDepth?: number } = {},
+): { edits: Edit[]; warnings: string[]; region: TocRegion | null } {
+  const warnings: string[] = [];
+  const region = findTocRegion(model, source, warnings);
+
+  if (!region) {
+    return { edits: [], warnings, region: null };
+  }
+
+  const { start, end } = region;
 
   const maxTocLevel =
     model.minLevel + (opts.tocDepth ?? model.maxLevel - model.minLevel + 1) - 1;
@@ -65,5 +84,6 @@ export function tocEdits(
   return {
     edits: [{ start, end, replacement: `\n${lines.join("\n")}\n` }],
     warnings,
+    region,
   };
 }
