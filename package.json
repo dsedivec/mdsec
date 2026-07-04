@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "test": "vitest run",
     "mdsec": "tsx src/cli.ts"
   },
