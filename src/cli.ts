@@ -26,16 +26,35 @@ function fail(msg: string): never {
   process.exit(2);
 }
 
+function validateLevel(v: unknown, name: string, source: string): number | undefined {
+  if (v === undefined) return undefined;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < 1 || n > 6) fail(`${name} must be 1-6 (in ${source})`);
+  return n;
+}
+
 function loadConfig(startDir: string): Partial<RunOptions> {
   let dir = resolve(startDir);
   for (;;) {
     const p = join(dir, ".mdsec.json");
     if (existsSync(p)) {
+      let parsed: Partial<RunOptions>;
       try {
-        return JSON.parse(readFileSync(p, "utf8"));
+        parsed = JSON.parse(readFileSync(p, "utf8"));
       } catch (e) {
         fail(`bad config ${p}: ${(e as Error).message}`);
       }
+      if ("minLevel" in parsed) validateLevel(parsed.minLevel, "minLevel", p);
+      if ("maxLevel" in parsed) validateLevel(parsed.maxLevel, "maxLevel", p);
+      if ("tocDepth" in parsed) validateLevel(parsed.tocDepth, "tocDepth", p);
+      if (
+        "linkTextPattern" in parsed &&
+        parsed.linkTextPattern !== undefined &&
+        typeof parsed.linkTextPattern !== "string"
+      ) {
+        fail(`linkTextPattern must be a string (in ${p})`);
+      }
+      return parsed;
     }
     const parent = dirname(dir);
     if (parent === dir) return {};
@@ -43,20 +62,30 @@ function loadConfig(startDir: string): Partial<RunOptions> {
   }
 }
 
-const { values, positionals } = parseArgs({
-  options: {
-    write: { type: "boolean", short: "w" },
-    check: { type: "boolean" },
-    strict: { type: "boolean" },
-    "min-level": { type: "string" },
-    "max-level": { type: "string" },
-    "toc-depth": { type: "string" },
-    "link-text-pattern": { type: "string" },
-    verbose: { type: "boolean", short: "v" },
-    help: { type: "boolean", short: "h" },
-  },
-  allowPositionals: true,
-});
+const cliOptions = {
+  write: { type: "boolean", short: "w" },
+  check: { type: "boolean" },
+  strict: { type: "boolean" },
+  "min-level": { type: "string" },
+  "max-level": { type: "string" },
+  "toc-depth": { type: "string" },
+  "link-text-pattern": { type: "string" },
+  verbose: { type: "boolean", short: "v" },
+  help: { type: "boolean", short: "h" },
+} as const;
+
+let values: ReturnType<typeof parseArgs<{ options: typeof cliOptions; allowPositionals: true }>>["values"];
+let positionals: ReturnType<
+  typeof parseArgs<{ options: typeof cliOptions; allowPositionals: true }>
+>["positionals"];
+try {
+  ({ values, positionals } = parseArgs({
+    options: cliOptions,
+    allowPositionals: true,
+  }));
+} catch (e) {
+  fail((e as Error).message);
+}
 
 if (values.help) {
   process.stdout.write(HELP);
@@ -80,7 +109,12 @@ const opts: RunOptions = {
   linkTextPattern: values["link-text-pattern"] ?? config.linkTextPattern,
 };
 
-const source = file ? readFileSync(file, "utf8") : readFileSync(0, "utf8");
+let source: string;
+try {
+  source = file ? readFileSync(file, "utf8") : readFileSync(0, "utf8");
+} catch (e) {
+  fail(`cannot read ${file ?? "stdin"}: ${(e as Error).message}`);
+}
 const result = runDocument(source, opts);
 
 for (const w of result.warnings) process.stderr.write(`mdsec: warning: ${w}\n`);

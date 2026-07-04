@@ -37,4 +37,26 @@ describe("cli", () => {
     const r = run(["--min-level", "1"], "# Only One\n\n## Sub\n");
     expect(r.stdout).toBe("# 1. Only One\n\n## 1.1 Sub\n");
   });
+  it("missing file exits 2 with a clean error, no stack trace", () => {
+    const r = run(["/no/such/file-xyz.md"]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/mdsec:/);
+    expect(r.stderr).not.toMatch(/ at /);
+  });
+  it("unknown flag exits 2 with a clean error", () => {
+    const r = run(["--bogus"], "# T\n");
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/mdsec:/);
+    expect(r.stderr).not.toMatch(/\.(js|ts):\d+/);
+  });
+  it("invalid config value exits 2 mentioning the config path or field", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    writeFileSync(join(dir, ".mdsec.json"), JSON.stringify({ minLevel: 99 }));
+    const f = join(dir, "doc.md");
+    writeFileSync(f, "# T\n\n## Alpha\n");
+    const r = run([f]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/mdsec:/);
+    expect(r.stderr).toMatch(/minLevel|\.mdsec\.json/);
+  });
 });
