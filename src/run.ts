@@ -1,6 +1,7 @@
 import { buildModel } from "./model.js";
 import { renumberEdits } from "./renumber.js";
 import { applyEdits } from "./edits.js";
+import { linkEdits } from "./links.js";
 
 export interface RunOptions {
   minLevel?: number;
@@ -17,7 +18,12 @@ export interface RunResult {
 
 export function runDocument(source: string, opts: RunOptions): RunResult {
   const model = buildModel(source, opts);
-  const edits = [...renumberEdits(model)];
+  const links = linkEdits(model, source, { linkTextPattern: opts.linkTextPattern });
+  const edits = [...renumberEdits(model), ...links.edits];
   const output = applyEdits(source, edits);
-  return { output, warnings: model.warnings, changed: output !== source };
+  return {
+    output,
+    warnings: [...model.warnings, ...links.warnings],
+    changed: output !== source,
+  };
 }
