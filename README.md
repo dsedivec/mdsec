@@ -1,0 +1,78 @@
+# mdsec
+
+Renumber Markdown section headings (`1.`, `1.1`, `Appendix A.`, ...), keep internal
+links and a table of contents in sync as you reorder or edit.
+
+## What it does
+
+- Numbers headings within a chosen level range (`1.`, `1.1`, `1.1.1`, ...).
+- Detects and letters "Appendix" sections separately (`Appendix A.`, `A.1`, ...).
+- Rewrites internal links whose fragment or text refers to a renumbered
+  section — both exact anchor matches and "fuzzy" text like `[section 3.1]`
+  or `[§3]`.
+- Regenerates a table of contents between `<!-- toc -->` / `<!-- /toc -->`
+  markers.
+- Leaves headings inside blockquotes and code blocks untouched.
+- Is idempotent: running it twice produces the same output as running it once.
+
+## Install
+
+```sh
+npm install && npm run build
+```
+
+## Usage
+
+```sh
+# print renumbered document to stdout
+npm run mdsec -- doc.md
+
+# rewrite the file in place
+npm run mdsec -- -w doc.md
+
+# CI / pre-commit: fail if the file would change, without writing
+npm run mdsec -- --check doc.md
+```
+
+Example pre-commit hook:
+
+```sh
+npm run mdsec -- --check "$file" || {
+  echo "run: mdsec -w $file"
+  exit 1
+}
+```
+
+Other flags: `--min-level N` / `--max-level N` (default: inferred — level 1 if
+the document has a title in front matter or more than one H1, else level 2),
+`--toc-depth N`, `--link-text-pattern REGEX` (capture group 1 = the number in
+custom link text), `--strict` (with `--check`, also fail on warnings), `-v`
+verbose warnings.
+
+## Config file
+
+An `.mdsec.json` file (searched upward from the target file's directory) can
+set defaults for any of `minLevel`, `maxLevel`, `tocDepth`, `linkTextPattern`;
+CLI flags override it.
+
+## Title inference and appendices
+
+The numbered range starts at H1 when the document has YAML front matter with
+a `title` key, or more than one top-level H1 (treating the H1s as untitled
+sections); otherwise it starts at H2, treating a single H1 as the document
+title. A top-level heading starting with "Appendix" switches into appendix
+mode: subsequent top-level sections are lettered (`Appendix A.`, `Appendix
+B.`, ...) instead of numbered, and their sub-levels use the letter (`A.1`,
+`A.1.1`).
+
+## Table of contents
+
+Add a placeholder anywhere in the document:
+
+```markdown
+<!-- toc -->
+<!-- /toc -->
+```
+
+`mdsec` replaces everything between the markers with a nested list of links
+to each numbered heading (down to `--toc-depth`, default: `maxLevel`).
