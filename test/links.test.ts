@@ -35,6 +35,18 @@ describe("link rewriting", () => {
     const src = "# T\n\n## Alpha\n\n[x](https://ex.com/#alpha)\n";
     expect(runDocument(src, {}).output).toContain("https://ex.com/#alpha");
   });
+  it("does not corrupt link text containing a bare word after 'section'", () => {
+    const src = "# T\n\n## Caching\n\n[section about caching](#caching)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("[section about caching](#1-caching)");
+  });
+  it("still rewrites 'section A.2' and '§B' style tokens", () => {
+    const src =
+      "# T\n\n## Appendix B. Backups\n\n### B.1 Restore\n\nSee [section B.1](#b1-restore) and [§B](#appendix-b-backups).\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("[section A.1](#a1-restore)");
+    expect(r.output).toContain("[§A](#appendix-a-backups)");
+  });
 });
 
 describe("fuzzy link resolution", () => {

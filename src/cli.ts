@@ -44,9 +44,12 @@ function loadConfig(startDir: string): Partial<RunOptions> {
       } catch (e) {
         fail(`bad config ${p}: ${(e as Error).message}`);
       }
-      if ("minLevel" in parsed) validateLevel(parsed.minLevel, "minLevel", p);
-      if ("maxLevel" in parsed) validateLevel(parsed.maxLevel, "maxLevel", p);
-      if ("tocDepth" in parsed) validateLevel(parsed.tocDepth, "tocDepth", p);
+      if ("minLevel" in parsed)
+        parsed.minLevel = validateLevel(parsed.minLevel, "minLevel", p);
+      if ("maxLevel" in parsed)
+        parsed.maxLevel = validateLevel(parsed.maxLevel, "maxLevel", p);
+      if ("tocDepth" in parsed)
+        parsed.tocDepth = validateLevel(parsed.tocDepth, "tocDepth", p);
       if (
         "linkTextPattern" in parsed &&
         parsed.linkTextPattern !== undefined &&
@@ -118,6 +121,14 @@ try {
 const result = runDocument(source, opts);
 
 for (const w of result.warnings) process.stderr.write(`mdsec: warning: ${w}\n`);
+
+if (values.verbose) {
+  for (const e of result.edits) {
+    process.stderr.write(
+      `mdsec: edit @${e.start}-${e.end}: ${JSON.stringify(e.replacement)}\n`,
+    );
+  }
+}
 
 if (values.check) {
   const failWarn = values.strict && result.warnings.length > 0;

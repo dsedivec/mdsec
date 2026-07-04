@@ -49,6 +49,26 @@ describe("cli", () => {
     expect(r.stderr).toMatch(/mdsec:/);
     expect(r.stderr).not.toMatch(/\.(js|ts):\d+/);
   });
+  it("coerces numeric-string config values (e.g. tocDepth) to numbers", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    writeFileSync(join(dir, ".mdsec.json"), JSON.stringify({ tocDepth: "1" }));
+    const f = join(dir, "doc.md");
+    writeFileSync(
+      f,
+      "# T\n\n<!-- toc -->\n<!-- /toc -->\n\n## Alpha\n\n### Sub\n",
+    );
+    const r = run([f]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain(
+      "<!-- toc -->\n- [1. Alpha](#1-alpha)\n<!-- /toc -->",
+    );
+    expect(r.stdout).not.toContain("[1.1 Sub]");
+  });
+  it("--verbose reports each applied edit to stderr", () => {
+    const r = run(["--verbose"], "# T\n\n## Alpha\n");
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/edit @/);
+  });
   it("invalid config value exits 2 mentioning the config path or field", () => {
     const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
     writeFileSync(join(dir, ".mdsec.json"), JSON.stringify({ minLevel: 99 }));

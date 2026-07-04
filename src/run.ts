@@ -1,6 +1,6 @@
 import { buildModel } from "./model.js";
 import { renumberEdits } from "./renumber.js";
-import { applyEdits } from "./edits.js";
+import { applyEdits, type Edit } from "./edits.js";
 import { linkEdits } from "./links.js";
 import { tocEdits } from "./toc.js";
 
@@ -15,6 +15,8 @@ export interface RunResult {
   output: string;
   warnings: string[];
   changed: boolean;
+  /** All edits applied to produce `output`, in application order. */
+  edits: Edit[];
 }
 
 export function runDocument(source: string, opts: RunOptions): RunResult {
@@ -30,5 +32,6 @@ export function runDocument(source: string, opts: RunOptions): RunResult {
     output,
     warnings: [...model.warnings, ...links.warnings, ...toc.warnings],
     changed: output !== source,
+    edits,
   };
 }

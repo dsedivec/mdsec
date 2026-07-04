@@ -77,7 +77,8 @@ export function tocEdits(
   for (const s of model.sections) {
     if (!s.newPath || s.inBlockquote || s.level > maxTocLevel) continue;
     const indent = "  ".repeat(s.level - model.minLevel);
-    const label = `${formatPrefix(s.newPath, { appendixTop: s.isAppendix })} ${s.bareTitle}`;
+    const escapedTitle = s.bareTitle.replace(/[\\\[\]]/g, "\\$&");
+    const label = `${formatPrefix(s.newPath, { appendixTop: s.isAppendix })} ${escapedTitle}`;
     lines.push(`${indent}- [${label}](#${anchors.get(s)})`);
   }
 

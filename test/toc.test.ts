@@ -24,6 +24,11 @@ describe("toc", () => {
     const r = runDocument(src, {});
     expect(r.warnings.some((w) => /toc/i.test(w))).toBe(true);
   });
+  it("escapes brackets and backslashes in TOC labels", () => {
+    const src = "# T\n\n<!-- toc -->\n<!-- /toc -->\n\n## Caching [fast] stuff\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("Caching \\[fast\\] stuff");
+  });
   it("does not crash when stale TOC content has internal links that resolve", () => {
     const src =
       "# T\n\n<!-- toc -->\n- [Alpha](#alpha)\n<!-- /toc -->\n\n## Alpha\n\n### Sub\n";

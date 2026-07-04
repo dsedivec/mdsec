@@ -32,11 +32,3 @@ export function computeNewAnchors(model: DocModel): Map<Section, string> {
   }
   return map;
 }
-
-export function newAnchorMap(model: DocModel): Map<string, Section> {
-  const map = new Map<string, Section>();
-  for (const s of model.sections) {
-    if (s.oldAnchor) map.set(s.oldAnchor, s);
-  }
-  return map;
-}

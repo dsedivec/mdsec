@@ -5,7 +5,7 @@ import { computeNewAnchors } from "./renumber.js";
 import { formatNumber } from "./number.js";
 
 const DEFAULT_TEXT_RE =
-  /(§\s*|\bsections?\s+)([A-Za-z]+(?:\.\d+)*|\d+(?:\.\d+)*)|^([A-Za-z]+\.\d+(?:\.\d+)*|\d+(?:\.\d+)*)(?=[\s.):]|$)/;
+  /(§\s*|\bsections?\s+)([A-Z]+(?:\.\d+)+|[A-Z]+(?=[\s.):]|$)|\d+(?:\.\d+)*)|^([A-Za-z]+\.\d+(?:\.\d+)*|\d+(?:\.\d+)*)(?=[\s.):]|$)/;
 
 interface LinkNode {
   type: string;
