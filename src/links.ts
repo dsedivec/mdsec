@@ -1,3 +1,4 @@
+import GithubSlugger from "github-slugger";
 import type { DocModel, Section } from "./model.js";
 import type { Edit } from "./edits.js";
 import { computeNewAnchors } from "./renumber.js";
@@ -72,14 +73,57 @@ export function linkEdits(
   return { edits, warnings };
 }
 
+function bigrams(s: string): Set<string> {
+  const out = new Set<string>();
+  for (let i = 0; i < s.length - 1; i++) out.add(s.slice(i, i + 2));
+  return out;
+}
+
+function dice(a: string, b: string): number {
+  const A = bigrams(a);
+  const B = bigrams(b);
+  if (A.size === 0 || B.size === 0) return a === b ? 1 : 0;
+  let inter = 0;
+  for (const g of A) if (B.has(g)) inter++;
+  return (2 * inter) / (A.size + B.size);
+}
+
 function resolve(
   frag: string,
   byOldAnchor: Map<string, Section>,
   model: DocModel,
   warnings: string[],
 ): Section | null {
-  const s = byOldAnchor.get(frag);
-  if (s) return s;
+  const exact = byOldAnchor.get(frag);
+  if (exact) return exact;
+
+  const candidates = model.sections.filter((s) => !s.inBlockquote);
+
+  // 2) bare-title slug match (fragment may or may not carry a number token)
+  const stripped = frag.replace(/^(?:appendix-)?(?:[a-z]|\d+)(?:\d+)*(?:-\d+)*-/, "");
+  const titleMatches = candidates.filter((s) => {
+    const slug = new GithubSlugger().slug(s.bareTitle);
+    return slug === frag || slug === stripped;
+  });
+  if (titleMatches.length === 1) return titleMatches[0];
+  if (titleMatches.length > 1) {
+    warnings.push(`ambiguous internal link "#${frag}"; left unchanged`);
+    return null;
+  }
+
+  // 3) similarity on old anchors
+  const scored = candidates
+    .map((s) => ({ s, score: dice(frag, s.oldAnchor) }))
+    .sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  if (best && best.score >= 0.8) {
+    if (scored[1] && best.score - scored[1].score < 0.05) {
+      warnings.push(`ambiguous internal link "#${frag}"; left unchanged`);
+      return null;
+    }
+    warnings.push(`fuzzy-matched "#${frag}" -> "${best.s.bareTitle}"`);
+    return best.s;
+  }
   warnings.push(`unresolved internal link "#${frag}"`);
   return null;
 }
