@@ -6,7 +6,7 @@ import { toString as mdToString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import { parse as parseYaml } from "yaml";
 import type { Root, Heading } from "mdast";
-import { parsePrefix, letterFor } from "./number.js";
+import { parsePrefix, letterFor, type NumberStyle } from "./number.js";
 import { findTocRegion } from "./toc.js";
 
 export interface Section {
@@ -27,6 +27,7 @@ export interface DocModel {
   sections: Section[];
   minLevel: number;
   maxLevel: number;
+  numberStyle: NumberStyle;
   warnings: string[];
 }
 
@@ -34,7 +35,7 @@ const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatte
 
 export function buildModel(
   source: string,
-  opts: { minLevel?: number; maxLevel?: number },
+  opts: { minLevel?: number; maxLevel?: number; numberStyle?: NumberStyle },
 ): DocModel {
   const tree = processor.parse(source) as Root;
   const warnings: string[] = [];
@@ -162,5 +163,12 @@ export function buildModel(
     });
   }
 
-  return { tree, sections, minLevel, maxLevel, warnings };
+  return {
+    tree,
+    sections,
+    minLevel,
+    maxLevel,
+    numberStyle: opts.numberStyle ?? "top",
+    warnings,
+  };
 }

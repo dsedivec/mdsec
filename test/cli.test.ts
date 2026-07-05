@@ -71,6 +71,23 @@ describe("cli", () => {
     const none = run(["--no-toc-title"], src);
     expect(none.stdout).toContain("<!-- toc -->\n- [1. Alpha](#1-alpha)\n");
   });
+  it("--number-style controls trailing periods end to end", () => {
+    const src = "# T\n\n## Alpha\n\n### Sub\n";
+    expect(run(["--number-style", "none"], src).stdout).toBe(
+      "# T\n\n## 1 Alpha\n\n### 1.1 Sub\n",
+    );
+    expect(run(["--number-style", "all"], src).stdout).toBe(
+      "# T\n\n## 1. Alpha\n\n### 1.1. Sub\n",
+    );
+    const bad = run(["--number-style", "bogus"], src);
+    expect(bad.status).toBe(2);
+    expect(bad.stderr).toMatch(/numberStyle/);
+  });
+  it("--number-style converts between styles idempotently", () => {
+    const once = run(["--number-style", "all"], "# T\n\n## 1. Alpha\n\n### 1.1 Sub\n").stdout;
+    expect(once).toBe("# T\n\n## 1. Alpha\n\n### 1.1. Sub\n");
+    expect(run(["--number-style", "all"], once).stdout).toBe(once);
+  });
   it("--min-level overrides inference", () => {
     const r = run(["--min-level", "1"], "# Only One\n\n## Sub\n");
     expect(r.stdout).toBe("# 1. Only One\n\n## 1.1 Sub\n");

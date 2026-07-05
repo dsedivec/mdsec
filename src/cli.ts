@@ -16,6 +16,8 @@ Options:
       --strict              with --check, warnings also cause exit 1
       --min-level N         lowest heading level to number (default: inferred)
       --max-level N         highest heading level to number (default: 6)
+      --number-style S      trailing periods: none (18.1), top (18. and
+                            18.1; default), all (18.1.)
       --toc-depth N         heading depth included in the TOC
       --toc-title TEXT      heading above the TOC (default: Table of Contents)
       --no-toc-title        omit the TOC heading
@@ -36,6 +38,15 @@ function validateLevel(v: unknown, name: string, source: string): number | undef
   return n;
 }
 
+function validateNumberStyle(
+  v: unknown,
+  source: string,
+): "none" | "top" | "all" | undefined {
+  if (v === undefined) return undefined;
+  if (v === "none" || v === "top" || v === "all") return v;
+  fail(`numberStyle must be "none", "top", or "all" (in ${source})`);
+}
+
 function loadConfig(startDir: string): Partial<RunOptions> {
   let dir = resolve(startDir);
   for (;;) {
@@ -53,6 +64,8 @@ function loadConfig(startDir: string): Partial<RunOptions> {
         parsed.maxLevel = validateLevel(parsed.maxLevel, "maxLevel", p);
       if ("tocDepth" in parsed)
         parsed.tocDepth = validateLevel(parsed.tocDepth, "tocDepth", p);
+      if ("numberStyle" in parsed)
+        parsed.numberStyle = validateNumberStyle(parsed.numberStyle, p);
       if (
         "tocTitle" in parsed &&
         parsed.tocTitle !== undefined &&
@@ -82,6 +95,7 @@ const cliOptions = {
   strict: { type: "boolean" },
   "min-level": { type: "string" },
   "max-level": { type: "string" },
+  "number-style": { type: "string" },
   "toc-depth": { type: "string" },
   "toc-title": { type: "string" },
   "no-toc-title": { type: "boolean" },
@@ -124,6 +138,9 @@ function optionsFor(file: string | null): RunOptions {
   return {
     minLevel: num(values["min-level"], "--min-level") ?? config.minLevel,
     maxLevel: num(values["max-level"], "--max-level") ?? config.maxLevel,
+    numberStyle:
+      validateNumberStyle(values["number-style"], "--number-style") ??
+      config.numberStyle,
     tocDepth: num(values["toc-depth"], "--toc-depth") ?? config.tocDepth,
     tocTitle: values["no-toc-title"]
       ? false

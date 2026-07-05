@@ -45,15 +45,17 @@ npm run mdsec -- --check "$file" || {
 
 Other flags: `--min-level N` (default: inferred — level 1 if the document has
 a title in front matter or more than one H1, else level 2), `--max-level N`
-(default: 6), `--toc-depth N`, `--link-text-pattern REGEX` (capture group 1 =
+(default: 6), `--number-style none|top|all` (trailing periods: `18.1` /
+`18.` with `18.1` / `18.1.`; default `top`), `--toc-depth N`,
+`--link-text-pattern REGEX` (capture group 1 =
 the number in custom link text), `--strict` (with `--check`, also fail on
 warnings), `-v` verbose warnings.
 
 ## Config file
 
 An `.mdsec.json` file (searched upward from the target file's directory) can
-set defaults for any of `minLevel`, `maxLevel`, `tocDepth`, `tocTitle`,
-`linkTextPattern`;
+set defaults for any of `minLevel`, `maxLevel`, `numberStyle`, `tocDepth`,
+`tocTitle`, `linkTextPattern`;
 CLI flags override it.
 
 ## Title inference and appendices

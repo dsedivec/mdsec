@@ -1,12 +1,25 @@
 export type NumberPath = string[];
 
+/**
+ * Trailing-period style for heading number prefixes:
+ * "none" -> 18, 18.1, 18.1.1; "top" -> 18., 18.1, 18.1.1;
+ * "all" -> 18., 18.1., 18.1.1.
+ */
+export type NumberStyle = "none" | "top" | "all";
+
 export function formatNumber(path: NumberPath): string {
   return path.join(".");
 }
 
-export function formatPrefix(path: NumberPath, opts: { appendixTop: boolean }): string {
-  if (opts.appendixTop) return `Appendix ${path[0]}.`;
-  return path.length === 1 ? `${path[0]}.` : path.join(".");
+export function formatPrefix(
+  path: NumberPath,
+  opts: { appendixTop: boolean; style?: NumberStyle },
+): string {
+  const style = opts.style ?? "top";
+  const dot =
+    style === "all" || (style === "top" && path.length === 1) ? "." : "";
+  if (opts.appendixTop) return `Appendix ${path[0]}${dot}`;
+  return `${path.join(".")}${dot}`;
 }
 
 export function letterFor(n: number): string {
@@ -19,14 +32,20 @@ export function letterFor(n: number): string {
   return s;
 }
 
-const APPENDIX_RE = /^Appendix\s+([A-Z]+)\.\s+(.*)$/i;
+// Dotted letter form is case-insensitive ("Appendix a. x"); the dotless
+// form (numberStyle "none") requires uppercase so ordinary words after
+// "Appendix" ("Appendix on Formats") are not mistaken for a letter.
+const APPENDIX_RE = /^[Aa]ppendix\s+(?:([A-Za-z]+)\.|([A-Z]+)(?=\s))\s+(.*)$/;
 const PREFIX_RE = /^([A-Z]+|\d+)((?:\.\d+)*)\.?\s+(.*)$/;
 
 export function parsePrefix(
   title: string,
 ): { path: NumberPath; rest: string; isAppendixForm: boolean } | null {
   const a = title.match(APPENDIX_RE);
-  if (a) return { path: [a[1].toUpperCase()], rest: a[2], isAppendixForm: true };
+  if (a) {
+    const letter = (a[1] ?? a[2]).toUpperCase();
+    return { path: [letter], rest: a[3], isAppendixForm: true };
+  }
   const m = title.match(PREFIX_RE);
   if (!m) return null;
   // Reject "Appendix on Formats"-style: a bare word is not matched by the

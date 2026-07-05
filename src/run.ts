@@ -3,10 +3,13 @@ import { renumberEdits } from "./renumber.js";
 import { applyEdits, type Edit } from "./edits.js";
 import { linkEdits } from "./links.js";
 import { tocEdits } from "./toc.js";
+import type { NumberStyle } from "./number.js";
 
 export interface RunOptions {
   minLevel?: number;
   maxLevel?: number;
+  /** Trailing-period style: "none" (18.1), "top" (18. / 18.1), "all" (18.1.). */
+  numberStyle?: NumberStyle;
   tocDepth?: number;
   /** Heading generated above the TOC list; false disables it. */
   tocTitle?: string | false;

@@ -1,11 +1,11 @@
 import GithubSlugger from "github-slugger";
 import type { DocModel, Section } from "./model.js";
 import type { Edit } from "./edits.js";
-import { formatPrefix } from "./number.js";
+import { formatPrefix, type NumberStyle } from "./number.js";
 
-export function newHeadingText(s: Section): string {
+export function newHeadingText(s: Section, style: NumberStyle): string {
   if (!s.newPath) return s.oldText;
-  const prefix = formatPrefix(s.newPath, { appendixTop: s.isAppendix });
+  const prefix = formatPrefix(s.newPath, { appendixTop: s.isAppendix, style });
   return `${prefix} ${s.bareTitle}`;
 }
 
@@ -13,7 +13,10 @@ export function renumberEdits(model: DocModel): Edit[] {
   const edits: Edit[] = [];
   for (const s of model.sections) {
     if (!s.newPath) continue;
-    const prefix = formatPrefix(s.newPath, { appendixTop: s.isAppendix });
+    const prefix = formatPrefix(s.newPath, {
+      appendixTop: s.isAppendix,
+      style: model.numberStyle,
+    });
     edits.push({
       start: s.textStart,
       end: s.prefixEnd ?? s.textStart,
@@ -27,7 +30,7 @@ export function computeNewAnchors(model: DocModel): Map<Section, string> {
   const slugger = new GithubSlugger();
   const map = new Map<Section, string>();
   for (const s of model.sections) {
-    const text = s.inBlockquote ? s.oldText : newHeadingText(s);
+    const text = s.inBlockquote ? s.oldText : newHeadingText(s, model.numberStyle);
     map.set(s, slugger.slug(text));
   }
   return map;

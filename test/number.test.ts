@@ -11,6 +11,23 @@ describe("formatPrefix", () => {
     expect(formatPrefix(["A"], { appendixTop: true })).toBe("Appendix A.");
     expect(formatPrefix(["A", "1"], { appendixTop: false })).toBe("A.1");
   });
+  it("style none: no trailing periods anywhere", () => {
+    expect(formatPrefix(["2"], { appendixTop: false, style: "none" })).toBe("2");
+    expect(formatPrefix(["2", "3"], { appendixTop: false, style: "none" })).toBe("2.3");
+    expect(formatPrefix(["A"], { appendixTop: true, style: "none" })).toBe("Appendix A");
+    expect(formatPrefix(["A", "1"], { appendixTop: false, style: "none" })).toBe("A.1");
+  });
+  it("style top (default): trailing period on top level only", () => {
+    expect(formatPrefix(["2"], { appendixTop: false, style: "top" })).toBe("2.");
+    expect(formatPrefix(["2", "3"], { appendixTop: false, style: "top" })).toBe("2.3");
+  });
+  it("style all: trailing periods on every level", () => {
+    expect(formatPrefix(["2"], { appendixTop: false, style: "all" })).toBe("2.");
+    expect(formatPrefix(["2", "3"], { appendixTop: false, style: "all" })).toBe("2.3.");
+    expect(formatPrefix(["2", "3", "1"], { appendixTop: false, style: "all" })).toBe("2.3.1.");
+    expect(formatPrefix(["A"], { appendixTop: true, style: "all" })).toBe("Appendix A.");
+    expect(formatPrefix(["A", "1"], { appendixTop: false, style: "all" })).toBe("A.1.");
+  });
 });
 
 describe("parsePrefix", () => {
@@ -21,6 +38,13 @@ describe("parsePrefix", () => {
   it("parses appendix prefixes", () => {
     expect(parsePrefix("Appendix A. Backups")).toEqual({ path: ["A"], rest: "Backups", isAppendixForm: true });
     expect(parsePrefix("A.1 Restore")).toEqual({ path: ["A", "1"], rest: "Restore", isAppendixForm: false });
+  });
+  it("parses all three trailing-period styles on re-runs", () => {
+    expect(parsePrefix("18 Foo")).toEqual({ path: ["18"], rest: "Foo", isAppendixForm: false });
+    expect(parsePrefix("18.1. Foo")).toEqual({ path: ["18", "1"], rest: "Foo", isAppendixForm: false });
+    expect(parsePrefix("18.1.1. Foo")).toEqual({ path: ["18", "1", "1"], rest: "Foo", isAppendixForm: false });
+    expect(parsePrefix("Appendix A Backups")).toEqual({ path: ["A"], rest: "Backups", isAppendixForm: true });
+    expect(parsePrefix("A.1. Restore")).toEqual({ path: ["A", "1"], rest: "Restore", isAppendixForm: false });
   });
   it("returns null when no prefix", () => {
     expect(parsePrefix("Plain Title")).toBeNull();

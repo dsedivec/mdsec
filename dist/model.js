@@ -124,5 +124,12 @@ export function buildModel(source, opts) {
             prefixEnd,
         });
     }
-    return { tree, sections, minLevel, maxLevel, warnings };
+    return {
+        tree,
+        sections,
+        minLevel,
+        maxLevel,
+        numberStyle: opts.numberStyle ?? "top",
+        warnings,
+    };
 }
