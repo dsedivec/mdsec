@@ -115,7 +115,7 @@ describe("cli", () => {
     const r = run([f]);
     expect(r.status).toBe(0);
     expect(r.stdout).toContain(
-      "<!-- toc -->\n## Table of Contents\n\n- [1. Alpha](#1-alpha)\n<!-- /toc -->",
+      "<!-- toc -->\n## Table of Contents\n\n- [1. Alpha](#1-alpha)\n\n<!-- /toc -->",
     );
     expect(r.stdout).not.toContain("[1.1 Sub]");
   });

@@ -90,7 +90,9 @@ export function tocEdits(
     title === false ? "" : `${"#".repeat(model.minLevel)} ${title}\n\n`;
 
   return {
-    edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n` }],
+    // Trailing blank line keeps the closing marker a separate block: some
+    // editors (e.g. Typora) otherwise indent it into the last list item.
+    edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n\n` }],
     warnings,
     region,
   };

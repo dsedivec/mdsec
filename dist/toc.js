@@ -65,7 +65,9 @@ export function tocEdits(model, source, opts = {}) {
     const title = opts.tocTitle ?? "Table of Contents";
     const heading = title === false ? "" : `${"#".repeat(model.minLevel)} ${title}\n\n`;
     return {
-        edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n` }],
+        // Trailing blank line keeps the closing marker a separate block: some
+        // editors (e.g. Typora) otherwise indent it into the last list item.
+        edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n\n` }],
         warnings,
         region,
     };
