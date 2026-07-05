@@ -24,6 +24,37 @@ describe("cli", () => {
     expect(r.status).toBe(0);
     expect(readFileSync(f, "utf8")).toBe("# T\n\n## 1. Alpha\n");
   });
+  it("accepts multiple files with -w (pre-commit style)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    const a = join(dir, "a.md");
+    const b = join(dir, "b.md");
+    writeFileSync(a, "# T\n\n## Alpha\n");
+    writeFileSync(b, "# T\n\n## 1. Beta\n");
+    const r = run(["-w", a, b]);
+    expect(r.status).toBe(0);
+    expect(readFileSync(a, "utf8")).toBe("# T\n\n## 1. Alpha\n");
+    expect(readFileSync(b, "utf8")).toBe("# T\n\n## 1. Beta\n");
+  });
+  it("rejects multiple files without --write or --check", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    const a = join(dir, "a.md");
+    const b = join(dir, "b.md");
+    writeFileSync(a, "# T\n");
+    writeFileSync(b, "# T\n");
+    const r = run([a, b]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/multiple FILE/);
+  });
+  it("--check with multiple files exits 1 if any needs changes", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    const a = join(dir, "a.md");
+    const b = join(dir, "b.md");
+    writeFileSync(a, "# T\n\n## 1. Alpha\n");
+    writeFileSync(b, "# T\n\n## Beta\n");
+    expect(run(["--check", a, b]).status).toBe(1);
+    writeFileSync(b, "# T\n\n## 1. Beta\n");
+    expect(run(["--check", a, b]).status).toBe(0);
+  });
   it("--check exits 1 when changes needed, 0 when clean", () => {
     expect(run(["--check"], "# T\n\n## Alpha\n").status).toBe(1);
     expect(run(["--check"], "# T\n\n## 1. Alpha\n").status).toBe(0);

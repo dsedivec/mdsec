@@ -81,6 +81,24 @@ links to each numbered heading (down to `--toc-depth`, default: `maxLevel`).
 Use `--toc-title TEXT` to change the heading text, or `--no-toc-title`
 (config: `"tocTitle": false`) to omit it.
 
+## pre-commit / prek hook
+
+This repository is a [pre-commit](https://pre-commit.com)-compatible hook
+source (works with [prek](https://github.com/j178/prek) too). In your
+project's `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: git@github.com:dsedivec/mdsec.git
+    rev: <commit-or-tag>
+    hooks:
+      - id: mdsec
+```
+
+The `mdsec` hook rewrites staged Markdown files in place (the commit fails
+so you can restage the changes); use `id: mdsec-check` instead for a
+verify-only hook that never modifies files.
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).

@@ -3,10 +3,11 @@ import { parseArgs } from "node:util";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { runDocument } from "./run.js";
-const HELP = `Usage: mdsec [options] [FILE]
+const HELP = `Usage: mdsec [options] [FILE...]
 
 Renumber Markdown sections, update internal links, regenerate TOC.
 Reads stdin (or FILE) and writes stdout unless --write.
+Multiple FILEs are allowed with --write or --check.
 
 Options:
   -w, --write               modify FILE in place
@@ -98,12 +99,11 @@ if (values.help) {
     process.stdout.write(HELP);
     process.exit(0);
 }
-if (positionals.length > 1)
-    fail("at most one FILE argument");
-const file = positionals[0] && positionals[0] !== "-" ? positionals[0] : null;
-if (values.write && !file)
+const files = positionals.filter((p) => p !== "-");
+if (values.write && files.length === 0)
     fail("--write requires a FILE argument");
-const config = loadConfig(file ? dirname(resolve(file)) : process.cwd());
+if (files.length > 1 && !values.write && !values.check)
+    fail("multiple FILE arguments require --write or --check");
 const num = (v, name) => {
     if (v === undefined)
         return undefined;
@@ -112,38 +112,56 @@ const num = (v, name) => {
         fail(`${name} must be 1-6`);
     return n;
 };
-const opts = {
-    minLevel: num(values["min-level"], "--min-level") ?? config.minLevel,
-    maxLevel: num(values["max-level"], "--max-level") ?? config.maxLevel,
-    tocDepth: num(values["toc-depth"], "--toc-depth") ?? config.tocDepth,
-    tocTitle: values["no-toc-title"]
-        ? false
-        : values["toc-title"] ?? config.tocTitle,
-    linkTextPattern: values["link-text-pattern"] ?? config.linkTextPattern,
-};
-let source;
-try {
-    source = file ? readFileSync(file, "utf8") : readFileSync(0, "utf8");
+function optionsFor(file) {
+    const config = loadConfig(file ? dirname(resolve(file)) : process.cwd());
+    return {
+        minLevel: num(values["min-level"], "--min-level") ?? config.minLevel,
+        maxLevel: num(values["max-level"], "--max-level") ?? config.maxLevel,
+        tocDepth: num(values["toc-depth"], "--toc-depth") ?? config.tocDepth,
+        tocTitle: values["no-toc-title"]
+            ? false
+            : values["toc-title"] ?? config.tocTitle,
+        linkTextPattern: values["link-text-pattern"] ?? config.linkTextPattern,
+    };
 }
-catch (e) {
-    fail(`cannot read ${file ?? "stdin"}: ${e.message}`);
-}
-const result = runDocument(source, opts);
-for (const w of result.warnings)
-    process.stderr.write(`mdsec: warning: ${w}\n`);
-if (values.verbose) {
-    for (const e of result.edits) {
-        process.stderr.write(`mdsec: edit @${e.start}-${e.end}: ${JSON.stringify(e.replacement)}\n`);
+let anyChanged = false;
+let anyWarned = false;
+function processOne(file) {
+    let source;
+    try {
+        source = file ? readFileSync(file, "utf8") : readFileSync(0, "utf8");
+    }
+    catch (e) {
+        fail(`cannot read ${file ?? "stdin"}: ${e.message}`);
+    }
+    const result = runDocument(source, optionsFor(file));
+    const where = file ? `${file}: ` : "";
+    for (const w of result.warnings)
+        process.stderr.write(`mdsec: warning: ${where}${w}\n`);
+    anyWarned ||= result.warnings.length > 0;
+    anyChanged ||= result.changed;
+    if (values.verbose) {
+        for (const e of result.edits) {
+            process.stderr.write(`mdsec: edit ${where}@${e.start}-${e.end}: ${JSON.stringify(e.replacement)}\n`);
+        }
+    }
+    if (values.check)
+        return;
+    if (values.write) {
+        if (result.changed)
+            writeFileSync(file, result.output);
+    }
+    else {
+        process.stdout.write(result.output);
     }
 }
-if (values.check) {
-    const failWarn = values.strict && result.warnings.length > 0;
-    process.exit(result.changed || failWarn ? 1 : 0);
-}
-if (values.write) {
-    if (result.changed)
-        writeFileSync(file, result.output);
+if (files.length === 0) {
+    processOne(null);
 }
 else {
-    process.stdout.write(result.output);
+    for (const f of files)
+        processOne(f);
+}
+if (values.check) {
+    process.exit(anyChanged || (values.strict && anyWarned) ? 1 : 0);
 }

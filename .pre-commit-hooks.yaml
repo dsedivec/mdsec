@@ -1,0 +1,17 @@
+- id: mdsec
+  name: mdsec (renumber Markdown sections)
+  description: >-
+    Renumber Markdown section headings, update internal links, and
+    regenerate the table of contents in place.
+  entry: mdsec --write
+  language: node
+  types: [markdown]
+
+- id: mdsec-check
+  name: mdsec --check (verify Markdown section numbers)
+  description: >-
+    Fail if Markdown section numbers, internal links, or the table of
+    contents are out of date, without modifying files.
+  entry: mdsec --check
+  language: node
+  types: [markdown]
