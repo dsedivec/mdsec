@@ -12,7 +12,7 @@ export interface TocRegion {
 }
 
 export function findTocRegion(
-  model: DocModel,
+  model: Pick<DocModel, "tree">,
   source: string,
   warnings: string[] = [],
 ): TocRegion | null {
@@ -59,7 +59,7 @@ export function findTocRegion(
 export function tocEdits(
   model: DocModel,
   source: string,
-  opts: { tocDepth?: number } = {},
+  opts: { tocDepth?: number; tocTitle?: string | false } = {},
 ): { edits: Edit[]; warnings: string[]; region: TocRegion | null } {
   const warnings: string[] = [];
   const region = findTocRegion(model, source, warnings);
@@ -82,8 +82,12 @@ export function tocEdits(
     lines.push(`${indent}- [${label}](#${anchors.get(s)})`);
   }
 
+  const title = opts.tocTitle ?? "Table of Contents";
+  const heading =
+    title === false ? "" : `${"#".repeat(model.minLevel)} ${title}\n\n`;
+
   return {
-    edits: [{ start, end, replacement: `\n${lines.join("\n")}\n` }],
+    edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n` }],
     warnings,
     region,
   };

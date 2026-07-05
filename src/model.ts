@@ -7,6 +7,7 @@ import GithubSlugger from "github-slugger";
 import { parse as parseYaml } from "yaml";
 import type { Root, Heading } from "mdast";
 import { parsePrefix, letterFor } from "./number.js";
+import { findTocRegion } from "./toc.js";
 
 export interface Section {
   level: number;
@@ -62,6 +63,11 @@ export function buildModel(
   const minLevel = opts.minLevel ?? (fmTitle || h1Count > 1 ? 1 : 2);
   const maxLevel = opts.maxLevel ?? 6;
 
+  // Headings inside the TOC marker region (e.g. a generated "Table of
+  // Contents" title) are machine-managed: they keep their anchor for
+  // GitHub parity but are never numbered.
+  const tocRegion = findTocRegion({ tree }, source);
+
   const slugger = new GithubSlugger();
   const sections: Section[] = [];
   // counters[i] is the count at level minLevel+i
@@ -83,8 +89,15 @@ export function buildModel(
     let newPath: string[] | null = null;
     let isAppendix = false;
 
+    const nodeStart = node.position?.start?.offset ?? 0;
+    const inTocRegion =
+      tocRegion !== null && nodeStart >= tocRegion.start && nodeStart < tocRegion.end;
     const numberable =
-      !inBlockquote && node.depth >= minLevel && node.depth <= maxLevel && oldText.length > 0;
+      !inBlockquote &&
+      !inTocRegion &&
+      node.depth >= minLevel &&
+      node.depth <= maxLevel &&
+      oldText.length > 0;
 
     if (numberable) {
       const idx = node.depth - minLevel;

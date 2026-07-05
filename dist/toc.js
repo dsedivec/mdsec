@@ -59,8 +59,10 @@ export function tocEdits(model, source, opts = {}) {
         const label = `${formatPrefix(s.newPath, { appendixTop: s.isAppendix })} ${escapedTitle}`;
         lines.push(`${indent}- [${label}](#${anchors.get(s)})`);
     }
+    const title = opts.tocTitle ?? "Table of Contents";
+    const heading = title === false ? "" : `${"#".repeat(model.minLevel)} ${title}\n\n`;
     return {
-        edits: [{ start, end, replacement: `\n${lines.join("\n")}\n` }],
+        edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n` }],
         warnings,
         region,
     };

@@ -6,6 +6,7 @@ import { toString as mdToString } from "mdast-util-to-string";
 import GithubSlugger from "github-slugger";
 import { parse as parseYaml } from "yaml";
 import { parsePrefix, letterFor } from "./number.js";
+import { findTocRegion } from "./toc.js";
 const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ["yaml"]);
 export function buildModel(source, opts) {
     const tree = processor.parse(source);
@@ -34,6 +35,10 @@ export function buildModel(source, opts) {
     const h1Count = found.filter((f) => !f.inBlockquote && f.node.depth === 1).length;
     const minLevel = opts.minLevel ?? (fmTitle || h1Count > 1 ? 1 : 2);
     const maxLevel = opts.maxLevel ?? 6;
+    // Headings inside the TOC marker region (e.g. a generated "Table of
+    // Contents" title) are machine-managed: they keep their anchor for
+    // GitHub parity but are never numbered.
+    const tocRegion = findTocRegion({ tree }, source);
     const slugger = new GithubSlugger();
     const sections = [];
     // counters[i] is the count at level minLevel+i
@@ -51,7 +56,13 @@ export function buildModel(source, opts) {
         const bareTitle = parsed ? parsed.rest : oldText;
         let newPath = null;
         let isAppendix = false;
-        const numberable = !inBlockquote && node.depth >= minLevel && node.depth <= maxLevel && oldText.length > 0;
+        const nodeStart = node.position?.start?.offset ?? 0;
+        const inTocRegion = tocRegion !== null && nodeStart >= tocRegion.start && nodeStart < tocRegion.end;
+        const numberable = !inBlockquote &&
+            !inTocRegion &&
+            node.depth >= minLevel &&
+            node.depth <= maxLevel &&
+            oldText.length > 0;
         if (numberable) {
             const idx = node.depth - minLevel;
             if (prevDepthIdx >= 0 && idx > prevDepthIdx + 1) {

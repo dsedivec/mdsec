@@ -52,7 +52,8 @@ warnings), `-v` verbose warnings.
 ## Config file
 
 An `.mdsec.json` file (searched upward from the target file's directory) can
-set defaults for any of `minLevel`, `maxLevel`, `tocDepth`, `linkTextPattern`;
+set defaults for any of `minLevel`, `maxLevel`, `tocDepth`, `tocTitle`,
+`linkTextPattern`;
 CLI flags override it.
 
 ## Title inference and appendices
@@ -74,8 +75,11 @@ Add a placeholder anywhere in the document:
 <!-- /toc -->
 ```
 
-`mdsec` replaces everything between the markers with a nested list of links
-to each numbered heading (down to `--toc-depth`, default: `maxLevel`).
+`mdsec` replaces everything between the markers with an unnumbered "Table of
+Contents" heading (at the top numbered level) followed by a nested list of
+links to each numbered heading (down to `--toc-depth`, default: `maxLevel`).
+Use `--toc-title TEXT` to change the heading text, or `--no-toc-title`
+(config: `"tocTitle": false`) to omit it.
 
 ## License
 

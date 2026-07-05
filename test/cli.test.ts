@@ -33,6 +33,13 @@ describe("cli", () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/unresolved/);
   });
+  it("--toc-title and --no-toc-title control the TOC heading", () => {
+    const src = "# T\n\n<!-- toc -->\n<!-- /toc -->\n\n## Alpha\n";
+    const custom = run(["--toc-title", "Contents"], src);
+    expect(custom.stdout).toContain("<!-- toc -->\n## Contents\n\n");
+    const none = run(["--no-toc-title"], src);
+    expect(none.stdout).toContain("<!-- toc -->\n- [1. Alpha](#1-alpha)\n");
+  });
   it("--min-level overrides inference", () => {
     const r = run(["--min-level", "1"], "# Only One\n\n## Sub\n");
     expect(r.stdout).toBe("# 1. Only One\n\n## 1.1 Sub\n");
@@ -60,7 +67,7 @@ describe("cli", () => {
     const r = run([f]);
     expect(r.status).toBe(0);
     expect(r.stdout).toContain(
-      "<!-- toc -->\n- [1. Alpha](#1-alpha)\n<!-- /toc -->",
+      "<!-- toc -->\n## Table of Contents\n\n- [1. Alpha](#1-alpha)\n<!-- /toc -->",
     );
     expect(r.stdout).not.toContain("[1.1 Sub]");
   });

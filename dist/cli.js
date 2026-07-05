@@ -15,6 +15,8 @@ Options:
       --min-level N         lowest heading level to number (default: inferred)
       --max-level N         highest heading level to number (default: 6)
       --toc-depth N         heading depth included in the TOC
+      --toc-title TEXT      heading above the TOC (default: Table of Contents)
+      --no-toc-title        omit the TOC heading
       --link-text-pattern R regex for numbered link text (capture 1 = number)
   -v, --verbose             report warnings verbosely
   -h, --help                show this help
@@ -49,6 +51,12 @@ function loadConfig(startDir) {
                 parsed.maxLevel = validateLevel(parsed.maxLevel, "maxLevel", p);
             if ("tocDepth" in parsed)
                 parsed.tocDepth = validateLevel(parsed.tocDepth, "tocDepth", p);
+            if ("tocTitle" in parsed &&
+                parsed.tocTitle !== undefined &&
+                parsed.tocTitle !== false &&
+                typeof parsed.tocTitle !== "string") {
+                fail(`tocTitle must be a string or false (in ${p})`);
+            }
             if ("linkTextPattern" in parsed &&
                 parsed.linkTextPattern !== undefined &&
                 typeof parsed.linkTextPattern !== "string") {
@@ -69,6 +77,8 @@ const cliOptions = {
     "min-level": { type: "string" },
     "max-level": { type: "string" },
     "toc-depth": { type: "string" },
+    "toc-title": { type: "string" },
+    "no-toc-title": { type: "boolean" },
     "link-text-pattern": { type: "string" },
     verbose: { type: "boolean", short: "v" },
     help: { type: "boolean", short: "h" },
@@ -106,6 +116,9 @@ const opts = {
     minLevel: num(values["min-level"], "--min-level") ?? config.minLevel,
     maxLevel: num(values["max-level"], "--max-level") ?? config.maxLevel,
     tocDepth: num(values["toc-depth"], "--toc-depth") ?? config.tocDepth,
+    tocTitle: values["no-toc-title"]
+        ? false
+        : values["toc-title"] ?? config.tocTitle,
     linkTextPattern: values["link-text-pattern"] ?? config.linkTextPattern,
 };
 let source;

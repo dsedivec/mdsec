@@ -8,6 +8,8 @@ export interface RunOptions {
   minLevel?: number;
   maxLevel?: number;
   tocDepth?: number;
+  /** Heading generated above the TOC list; false disables it. */
+  tocTitle?: string | false;
   linkTextPattern?: string;
 }
 
@@ -21,7 +23,10 @@ export interface RunResult {
 
 export function runDocument(source: string, opts: RunOptions): RunResult {
   const model = buildModel(source, opts);
-  const toc = tocEdits(model, source, { tocDepth: opts.tocDepth });
+  const toc = tocEdits(model, source, {
+    tocDepth: opts.tocDepth,
+    tocTitle: opts.tocTitle,
+  });
   const links = linkEdits(model, source, {
     linkTextPattern: opts.linkTextPattern,
     excludeRanges: toc.region ? [toc.region] : [],

@@ -5,7 +5,10 @@ import { linkEdits } from "./links.js";
 import { tocEdits } from "./toc.js";
 export function runDocument(source, opts) {
     const model = buildModel(source, opts);
-    const toc = tocEdits(model, source, { tocDepth: opts.tocDepth });
+    const toc = tocEdits(model, source, {
+        tocDepth: opts.tocDepth,
+        tocTitle: opts.tocTitle,
+    });
     const links = linkEdits(model, source, {
         linkTextPattern: opts.linkTextPattern,
         excludeRanges: toc.region ? [toc.region] : [],
