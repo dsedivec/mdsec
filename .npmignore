@@ -1,0 +1,8 @@
+docs/
+test/
+scripts/release.sh
+.pre-commit-hooks.yaml
+.superpowers/
+.claude/
+*.tsbuildinfo
+vitest.config.ts
