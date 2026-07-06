@@ -2,7 +2,9 @@
 import { parseArgs } from "node:util";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { runDocument, type RunOptions } from "./run.js";
+import { resolveVersion } from "./version.js";
 
 const HELP = `Usage: mdsec [options] [FILE...]
 
@@ -23,6 +25,7 @@ Options:
       --no-toc-title        omit the TOC heading
       --link-text-pattern R regex for numbered link text (capture 1 = number)
   -v, --verbose             report warnings verbosely
+  -V, --version             show version and exit
   -h, --help                show this help
 `;
 
@@ -101,6 +104,7 @@ const cliOptions = {
   "no-toc-title": { type: "boolean" },
   "link-text-pattern": { type: "string" },
   verbose: { type: "boolean", short: "v" },
+  version: { type: "boolean", short: "V" },
   help: { type: "boolean", short: "h" },
 } as const;
 
@@ -121,6 +125,13 @@ if (values.help) {
   process.stdout.write(HELP);
   process.exit(0);
 }
+
+if (values.version) {
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  process.stdout.write(`mdsec ${resolveVersion(packageRoot)}\n`);
+  process.exit(0);
+}
+
 const files = positionals.filter((p) => p !== "-");
 if (values.write && files.length === 0) fail("--write requires a FILE argument");
 if (files.length > 1 && !values.write && !values.check)

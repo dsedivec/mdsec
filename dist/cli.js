@@ -2,7 +2,9 @@
 import { parseArgs } from "node:util";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { runDocument } from "./run.js";
+import { resolveVersion } from "./version.js";
 const HELP = `Usage: mdsec [options] [FILE...]
 
 Renumber Markdown sections, update internal links, regenerate TOC.
@@ -22,6 +24,7 @@ Options:
       --no-toc-title        omit the TOC heading
       --link-text-pattern R regex for numbered link text (capture 1 = number)
   -v, --verbose             report warnings verbosely
+  -V, --version             show version and exit
   -h, --help                show this help
 `;
 function fail(msg) {
@@ -94,6 +97,7 @@ const cliOptions = {
     "no-toc-title": { type: "boolean" },
     "link-text-pattern": { type: "string" },
     verbose: { type: "boolean", short: "v" },
+    version: { type: "boolean", short: "V" },
     help: { type: "boolean", short: "h" },
 };
 let values;
@@ -109,6 +113,11 @@ catch (e) {
 }
 if (values.help) {
     process.stdout.write(HELP);
+    process.exit(0);
+}
+if (values.version) {
+    const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    process.stdout.write(`mdsec ${resolveVersion(packageRoot)}\n`);
     process.exit(0);
 }
 const files = positionals.filter((p) => p !== "-");

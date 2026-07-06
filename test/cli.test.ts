@@ -134,4 +134,15 @@ describe("cli", () => {
     expect(r.stderr).toMatch(/mdsec:/);
     expect(r.stderr).toMatch(/minLevel|\.mdsec\.json/);
   });
+  it("--version prints mdsec plus a git-describe or vX.Y.Z version", () => {
+    for (const flag of ["--version", "-V"]) {
+      const r = run([flag]);
+      expect(r.status).toBe(0);
+      // Run from this checkout, resolution uses live git describe; tags
+      // exist, so expect the tag-based forms (or a bare hash fallback).
+      expect(r.stdout).toMatch(
+        /^mdsec (v\d+\.\d+\.\d+(-\d+-g[0-9a-f]+)?(-dirty)?|[0-9a-f]{4,40}(-dirty)?)\n$/,
+      );
+    }
+  });
 });
