@@ -145,4 +145,56 @@ describe("cli", () => {
       );
     }
   });
+
+  it("--diff prints a unified diff and exits 1 when changes are pending", () => {
+    for (const flag of ["--diff", "-d"]) {
+      const r = run([flag], "# T\n\n## Alpha\n");
+      expect(r.status).toBe(1);
+      expect(r.stdout).toContain("--- (stdin)");
+      expect(r.stdout).toContain("+++ (stdin) (mdsec)");
+      expect(r.stdout).toContain("-## Alpha");
+      expect(r.stdout).toContain("+## 1. Alpha");
+      expect(r.stdout).toMatch(/^@@ /m);
+      expect(r.stdout).not.toContain("\x1b[");
+    }
+  });
+
+  it("--diff exits 0 with empty stdout when nothing would change", () => {
+    const r = run(["--diff"], "# T\n\n## 1. Alpha\n");
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("--diff with multiple files shows only the dirty file's diff", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    const a = join(dir, "a.md");
+    const b = join(dir, "b.md");
+    writeFileSync(a, "# T\n\n## 1. Alpha\n");
+    writeFileSync(b, "# T\n\n## Beta\n");
+    const r = run(["--diff", a, b]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).not.toContain(`--- ${a}`);
+    expect(r.stdout).toContain(`--- ${b}`);
+    expect(readFileSync(b, "utf8")).toBe("# T\n\n## Beta\n"); // untouched
+  });
+
+  it("--diff --write is rejected with exit 2", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mdsec-"));
+    const f = join(dir, "doc.md");
+    writeFileSync(f, "# T\n\n## Alpha\n");
+    const r = run(["--diff", "--write", f]);
+    expect(r.status).toBe(2);
+    expect(r.stderr).toMatch(/--diff.*--write|--write.*--diff/);
+  });
+
+  it("--check --diff still prints the diff", () => {
+    const r = run(["--check", "--diff"], "# T\n\n## Alpha\n");
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain("-## Alpha");
+  });
+
+  it("--diff --strict exits 1 on warnings even without changes", () => {
+    const r = run(["--diff", "--strict"], "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n");
+    expect(r.status).toBe(1);
+  });
 });

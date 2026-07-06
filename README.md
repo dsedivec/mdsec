@@ -47,13 +47,22 @@ npm run mdsec -- --check "$file" || {
 }
 ```
 
-Other flags: `-V, --version` (show version and exit), `--min-level N` (default: inferred — level 1 if the document has
-a title in front matter or more than one H1, else level 2), `--max-level N`
-(default: 6), `--number-style none|top|all` (trailing periods: `18.1` /
-`18.` with `18.1` / `18.1.`; default `top`), `--toc-depth N`,
-`--link-text-pattern REGEX` (capture group 1 =
-the number in custom link text), `--strict` (with `--check`, also fail on
-warnings), `-v` verbose warnings.
+## Options
+
+- `-w`, `--write` (modify FILE in place)
+- `--check` (exit 1 if changes would be made; writes nothing; use `--diff` to see the pending changes)
+- `-d`, `--diff` (print a unified diff of pending changes; exits like `--check`)
+- `--strict` (with `--check`, also fail on warnings)
+- `--min-level N` (default: inferred — level 1 if the document has a title in front matter or more than one H1, else level 2)
+- `--max-level N` (default: 6)
+- `--number-style none|top|all` (trailing periods: `18.1` / `18.` with `18.1` / `18.1.`; default `top`)
+- `--toc-depth N` (heading depth included in the TOC)
+- `--toc-title TEXT` (heading above the TOC; default: Table of Contents)
+- `--no-toc-title` (omit the TOC heading)
+- `--link-text-pattern REGEX` (capture group 1 = the number in custom link text)
+- `-v`, `--verbose` (report warnings verbosely)
+- `-V`, `--version` (show version and exit)
+- `-h`, `--help` (show this help)
 
 ## Config file
 

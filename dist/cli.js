@@ -5,15 +5,18 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runDocument } from "./run.js";
 import { resolveVersion } from "./version.js";
+import { unifiedDiff } from "./diff.js";
 const HELP = `Usage: mdsec [options] [FILE...]
 
 Renumber Markdown sections, update internal links, regenerate TOC.
 Reads stdin (or FILE) and writes stdout unless --write.
-Multiple FILEs are allowed with --write or --check.
+Multiple FILEs are allowed with --write, --check, or --diff.
 
 Options:
   -w, --write               modify FILE in place
       --check               exit 1 if changes would be made; writes nothing
+  -d, --diff                print a unified diff of pending changes;
+                            exits like --check
       --strict              with --check, warnings also cause exit 1
       --min-level N         lowest heading level to number (default: inferred)
       --max-level N         highest heading level to number (default: 6)
@@ -31,6 +34,7 @@ function fail(msg) {
     process.stderr.write(`mdsec: ${msg}\n`);
     process.exit(2);
 }
+const useColor = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 function validateLevel(v, name, source) {
     if (v === undefined)
         return undefined;
@@ -88,6 +92,7 @@ function loadConfig(startDir) {
 const cliOptions = {
     write: { type: "boolean", short: "w" },
     check: { type: "boolean" },
+    diff: { type: "boolean", short: "d" },
     strict: { type: "boolean" },
     "min-level": { type: "string" },
     "max-level": { type: "string" },
@@ -123,8 +128,10 @@ if (values.version) {
 const files = positionals.filter((p) => p !== "-");
 if (values.write && files.length === 0)
     fail("--write requires a FILE argument");
-if (files.length > 1 && !values.write && !values.check)
-    fail("multiple FILE arguments require --write or --check");
+if (values.diff && values.write)
+    fail("--diff cannot be combined with --write");
+if (files.length > 1 && !values.write && !values.check && !values.diff)
+    fail("multiple FILE arguments require --write, --check, or --diff");
 const num = (v, name) => {
     if (v === undefined)
         return undefined;
@@ -168,6 +175,13 @@ function processOne(file) {
             process.stderr.write(`mdsec: edit ${where}@${e.start}-${e.end}: ${JSON.stringify(e.replacement)}\n`);
         }
     }
+    if (values.diff) {
+        // Before the --check return so "--check --diff" still prints the diff.
+        if (result.changed) {
+            process.stdout.write(unifiedDiff(source, result.output, file ?? "(stdin)", useColor));
+        }
+        return;
+    }
     if (values.check)
         return;
     if (values.write) {
@@ -185,6 +199,6 @@ else {
     for (const f of files)
         processOne(f);
 }
-if (values.check) {
+if (values.check || values.diff) {
     process.exit(anyChanged || (values.strict && anyWarned) ? 1 : 0);
 }
