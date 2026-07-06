@@ -47,7 +47,7 @@ npm run mdsec -- --check "$file" || {
 }
 ```
 
-Other flags: `--min-level N` (default: inferred — level 1 if the document has
+Other flags: `-V, --version` (show version and exit), `--min-level N` (default: inferred — level 1 if the document has
 a title in front matter or more than one H1, else level 2), `--max-level N`
 (default: 6), `--number-style none|top|all` (trailing periods: `18.1` /
 `18.` with `18.1` / `18.1.`; default `top`), `--toc-depth N`,
@@ -104,6 +104,22 @@ repos:
 The `mdsec` hook rewrites staged Markdown files in place (the commit fails
 so you can restage the changes); use `id: mdsec-check` instead for a
 verify-only hook that never modifies files.
+
+## Releasing
+
+Releases are cut from `main` with:
+
+    npm run release -- <patch|minor|major>
+
+The script verifies a clean, up-to-date `main`, runs the tests,
+rebuilds `dist/` (committing it if changed), bumps `package.json`,
+tags `vX.Y.Z`, and pushes. GitHub Actions then creates the GitHub
+release with auto-generated notes.
+
+`mdsec --version` reports `git describe` output when run from a
+checkout, the exact revision stamped at install time (pre-commit /
+npm-from-git installs), or `v` + the package.json version as a last
+resort.
 
 ## License
 
