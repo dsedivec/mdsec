@@ -90,7 +90,7 @@ export function unifiedDiff(
   const groups: { from: number; to: number }[] = [];
   for (const c of changed) {
     const last = groups[groups.length - 1];
-    if (last && c - last.to <= 2 * CONTEXT) last.to = c;
+    if (last && c - last.to <= 2 * CONTEXT + 1) last.to = c;
     else groups.push({ from: c, to: c });
   }
 

@@ -47,17 +47,44 @@ describe("unifiedDiff", () => {
   });
 
   it("merges hunks whose context would touch", () => {
-    const old10 = Array.from({ length: 12 }, (_, i) => `l${i + 1}`);
-    const neu = [...old10];
-    neu[2] = "L3";
-    neu[8] = "L9"; // gap of 5 unchanged lines (< 2*3+1) => one hunk
-    const out = unifiedDiff(
-      old10.join("\n") + "\n",
-      neu.join("\n") + "\n",
+    // gap-5 case: gap of 5 unchanged lines (< 2*3+1) => one hunk
+    const old12 = Array.from({ length: 12 }, (_, i) => `l${i + 1}`);
+    const neu5 = [...old12];
+    neu5[2] = "L3";
+    neu5[8] = "L9";
+    const out5 = unifiedDiff(
+      old12.join("\n") + "\n",
+      neu5.join("\n") + "\n",
       "doc.md",
       false,
     );
-    expect(out.match(/^@@ /gm)).toHaveLength(1);
+    expect(out5.match(/^@@ /gm)).toHaveLength(1);
+
+    // gap-6 case: gap of 6 unchanged lines (= 2*3) => one hunk (contexts touch)
+    const old16 = Array.from({ length: 16 }, (_, i) => `l${i + 1}`);
+    const neu6 = [...old16];
+    neu6[2] = "L3";
+    neu6[9] = "L10";
+    const out6 = unifiedDiff(
+      old16.join("\n") + "\n",
+      neu6.join("\n") + "\n",
+      "doc.md",
+      false,
+    );
+    expect(out6.match(/^@@ /gm)).toHaveLength(1);
+
+    // gap-7 case: gap of 7 unchanged lines (> 2*3) => two hunks (contexts don't touch)
+    const old17 = Array.from({ length: 17 }, (_, i) => `l${i + 1}`);
+    const neu7 = [...old17];
+    neu7[2] = "L3";
+    neu7[10] = "L11";
+    const out7 = unifiedDiff(
+      old17.join("\n") + "\n",
+      neu7.join("\n") + "\n",
+      "doc.md",
+      false,
+    );
+    expect(out7.match(/^@@ /gm)).toHaveLength(2);
   });
 
   it("truncates context at the first and last lines", () => {
