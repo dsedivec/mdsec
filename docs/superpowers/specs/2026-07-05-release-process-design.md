@@ -16,7 +16,11 @@ version otherwise.
   because pre-commit installs the package from a git clone.
 - Consumption modes: (a) as a pre-commit hook, (b) run directly from
   a checkout (`npm run mdsec` / tsx). No npm registry publishing.
-- No git tags or CI exist yet.
+- Tags and GitHub releases v0.1.0 through v0.3.0 already exist,
+  created manually. No CI exists yet. `package.json` still says
+  `0.1.0`, out of sync with the latest tag; implementation must sync
+  it to `0.3.0` first, since `npm version` bumps from `package.json`
+  and would otherwise try to re-create an existing tag.
 
 ## 1. Versioning scheme
 
