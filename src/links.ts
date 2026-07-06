@@ -2,10 +2,26 @@ import GithubSlugger from "github-slugger";
 import type { DocModel, Section } from "./model.js";
 import type { Edit } from "./edits.js";
 import { computeNewAnchors } from "./renumber.js";
-import { formatNumber } from "./number.js";
+import { formatNumber, parsePrefix } from "./number.js";
 
 const DEFAULT_TEXT_RE =
   /(§\s*|\bsections?\s+)([A-Z]+(?:\.\d+)+|[A-Z]+(?=[\s.):]|$)|\d+(?:\.\d+)*)|^([A-Za-z]+\.\d+(?:\.\d+)*|\d+(?:\.\d+)*)(?=[\s.):]|$)/;
+
+// Leading section-number token in an anchor fragment: "5-", "31-" (from
+// "3.1"), "b1-" (from "B.1"), "appendix-b-". Same shapes the bare-title
+// strip below recognizes; group 1 is the token without its trailing "-".
+const NUMBER_TOKEN_RE =
+  /^(appendix-[a-z]+|(?:[a-z]+(?=\d)|\d+)[a-z0-9]*(?:-\d+)*)-/;
+
+// The number currently written in a section's heading, in anchor-slug form
+// ("3.1 Foo" -> "31", "Appendix B. X" -> "appendix-b"), or null if the
+// heading carries no number.
+function oldNumberSlug(s: Section): string | null {
+  const p = parsePrefix(s.oldText);
+  if (!p) return null;
+  const joined = p.path.join("").toLowerCase();
+  return p.isAppendixForm ? `appendix-${joined}` : joined;
+}
 
 interface LinkNode {
   type: string;
@@ -107,10 +123,8 @@ function resolve(
   const candidates = model.sections.filter((s) => !s.inBlockquote);
 
   // 2) bare-title slug match (fragment may or may not carry a number token)
-  const stripped = frag.replace(
-    /^(?:appendix-[a-z]+-|(?:[a-z]+(?=\d)|\d+)[a-z0-9]*(?:-\d+)*-)/,
-    "",
-  );
+  const tokenMatch = frag.match(NUMBER_TOKEN_RE);
+  const stripped = tokenMatch ? frag.slice(tokenMatch[0].length) : frag;
   const titleMatches = candidates.filter((s) => {
     const slug = new GithubSlugger().slug(s.bareTitle);
     return slug === frag || slug === stripped;
@@ -121,7 +135,26 @@ function resolve(
     return null;
   }
 
-  // 3) similarity on old anchors
+  // 3) number-prefix match: trust the number currently written in a heading
+  // when the title was renamed out from under the link.
+  if (tokenMatch) {
+    const token = tokenMatch[1].startsWith("appendix-")
+      ? tokenMatch[1]
+      : tokenMatch[1].replace(/-/g, "");
+    const numberMatches = candidates.filter((s) => oldNumberSlug(s) === token);
+    if (numberMatches.length === 1) {
+      warnings.push(
+        `matched "#${frag}" -> "${numberMatches[0].bareTitle}" by section number`,
+      );
+      return numberMatches[0];
+    }
+    if (numberMatches.length > 1) {
+      warnings.push(`ambiguous internal link "#${frag}"; left unchanged`);
+      return null;
+    }
+  }
+
+  // 4) similarity on old anchors
   const scored = candidates
     .map((s) => ({ s, score: dice(frag, s.oldAnchor) }))
     .sort((a, b) => b.score - a.score);

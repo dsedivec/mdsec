@@ -54,7 +54,7 @@ describe("fuzzy link resolution", () => {
     const src = "# T\n\n## 1. Alpha Settings\n\n[section 1](#1-alpha-setting)\n";
     const r = runDocument(src, {});
     expect(r.output).toContain("(#1-alpha-settings)");
-    expect(r.warnings.some((w) => /fuzzy/i.test(w))).toBe(true);
+    expect(r.warnings.some((w) => /by section number/.test(w))).toBe(true);
   });
   it("resolves bare-title fragment against numbered heading", () => {
     const src = "# T\n\n## 3. Alpha\n\n[Alpha](#alpha)\n";
@@ -91,5 +91,42 @@ describe("fuzzy link resolution", () => {
     const r = runDocument(src, {});
     expect(r.output).toContain("(#a-quick-guide-to-things)");
     expect(r.warnings.some((w) => w.includes("#a-quick-guide-to-things"))).toBe(true);
+  });
+});
+
+describe("number-prefix link resolution (renamed headings)", () => {
+  it("resolves a link to a renamed heading via its unchanged number", () => {
+    const src =
+      "# T\n\n## 1. Alpha\n\n## 2. Message Format\n\nSee [section 2](#2-common-message-envelope).\n";
+    const r = runDocument(src, {});
+    expect(r.output).toBe(
+      "# T\n\n## 1. Alpha\n\n## 2. Message Format\n\nSee [section 2](#2-message-format).\n",
+    );
+    expect(r.warnings.some((w) => /by section number/.test(w))).toBe(true);
+  });
+  it("resolves via the old number even when the same run renumbers the section", () => {
+    const src =
+      "# T\n\n## 1. Alpha\n\n## New Thing\n\n## 2. Message Format\n\nSee [section 2](#2-common-message-envelope).\n";
+    const r = runDocument(src, {});
+    expect(r.output).toBe(
+      "# T\n\n## 1. Alpha\n\n## 2. New Thing\n\n## 3. Message Format\n\nSee [section 3](#3-message-format).\n",
+    );
+  });
+  it("warns and leaves the link when two headings share the old number", () => {
+    const src = "# T\n\n## 2. Foo\n\n## 2. Bar\n\n[x](#2-baz)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("(#2-baz)");
+    expect(r.warnings.some((w) => /ambiguous/i.test(w))).toBe(true);
+  });
+  it("resolves lettered appendix sub-section fragments", () => {
+    const src =
+      "# T\n\n## Appendix B. Backups\n\n### B.1 Data Restore\n\n[B.1](#b1-restore)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("[A.1](#a1-data-restore)");
+  });
+  it("resolves top-level appendix fragments", () => {
+    const src = "# T\n\n## Appendix B. Storage\n\n[x](#appendix-b-backups)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("(#appendix-a-storage)");
   });
 });
