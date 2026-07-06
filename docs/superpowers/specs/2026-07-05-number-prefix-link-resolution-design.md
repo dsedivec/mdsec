@@ -34,10 +34,11 @@ order becomes:
 
 ### Number-prefix match
 
-- Parse a leading number/letter token from the fragment: `5-…`, `3-1-…`,
-  `appendix-b-…`, `b-2-…` — the same shapes the existing `stripped` regex
-  recognizes. Derive both the token and the stripped remainder from one
-  shared parse.
+- Parse a leading number/letter token from the fragment: `5-…`, `31-…`
+  (from "3.1"), `appendix-b-…`, `b1-…` (from "B.1") — the same shapes the
+  existing `stripped` regex recognizes. (GitHub slugs drop dots, so `b-2-…`
+  never arises from a real anchor.) Derive both the token and the stripped
+  remainder from one shared parse.
 - Compare the token against each candidate section's *old* number (the
   number currently written in its heading, already in the model). Candidates
   exclude blockquoted sections, as elsewhere.

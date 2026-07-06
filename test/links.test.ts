@@ -129,4 +129,10 @@ describe("number-prefix link resolution (renamed headings)", () => {
     const r = runDocument(src, {});
     expect(r.output).toContain("(#appendix-a-storage)");
   });
+  it("skips fragments without a number token", () => {
+    const src = "# T\n\n## 1. Alpha\n\n[x](#totally-unrelated)\n";
+    const r = runDocument(src, {});
+    expect(r.output).toContain("(#totally-unrelated)");
+    expect(r.warnings.some((w) => w.includes("unresolved"))).toBe(true);
+  });
 });
