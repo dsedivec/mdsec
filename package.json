@@ -10,7 +10,8 @@
     "build": "tsc",
     "test": "vitest run",
     "mdsec": "tsx src/cli.ts",
-    "prepare": "node scripts/write-version-stamp.js"
+    "prepare": "node scripts/write-version-stamp.js",
+    "release": "scripts/release.sh"
   },
   "dependencies": {
     "github-slugger": "^2.0.0",
