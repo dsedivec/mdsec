@@ -9,7 +9,11 @@ links and a table of contents in sync as you reorder or edit.
 - Detects and letters "Appendix" sections separately (`Appendix A.`, `A.1`, ...).
 - Rewrites internal links whose fragment or text refers to a renumbered
   section — both exact anchor matches and "fuzzy" text like `[section 3.1]`
-  or `[§3]`.
+  or `[§3]`. Links broken by retitling a heading are repaired via the
+  section number: if you rename "5. Common Message Envelope" to
+  "5. Message Format", links to `#5-common-message-envelope` are rewritten
+  to the section's new anchor (with a warning; ambiguous duplicate numbers
+  are left unchanged).
 - Regenerates a table of contents between `<!-- toc -->` / `<!-- /toc -->`
   markers.
 - Leaves headings inside blockquotes and code blocks untouched.
