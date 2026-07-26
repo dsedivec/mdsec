@@ -40,7 +40,7 @@ describe("parsePrefix", () => {
     expect(parsePrefix("A.1 Restore")).toEqual({ path: ["A", "1"], rest: "Restore", isAppendixForm: false });
   });
   it("parses all three trailing-period styles on re-runs", () => {
-    expect(parsePrefix("18 Foo")).toEqual({ path: ["18"], rest: "Foo", isAppendixForm: false });
+    expect(parsePrefix("18 Foo", { style: "none" })).toEqual({ path: ["18"], rest: "Foo", isAppendixForm: false });
     expect(parsePrefix("18.1. Foo")).toEqual({ path: ["18", "1"], rest: "Foo", isAppendixForm: false });
     expect(parsePrefix("18.1.1. Foo")).toEqual({ path: ["18", "1", "1"], rest: "Foo", isAppendixForm: false });
     expect(parsePrefix("Appendix A Backups")).toEqual({ path: ["A"], rest: "Backups", isAppendixForm: true });
@@ -50,6 +50,17 @@ describe("parsePrefix", () => {
     expect(parsePrefix("Plain Title")).toBeNull();
     expect(parsePrefix("Appendix on Formats")).toBeNull();
     expect(parsePrefix("2Fast 2Furious")).toBeNull();
+  });
+  it("does not read a bare leading number as a prefix under dotted styles", () => {
+    // "2024" here is part of the title, not a section number we wrote.
+    for (const style of ["top", "all"] as const) {
+      expect(parsePrefix("2024 Roadmap", { style })).toBeNull();
+      expect(parsePrefix("10 Things I Learned", { style })).toBeNull();
+    }
+    expect(parsePrefix("2024 Roadmap")).toBeNull(); // default style is "top"
+    // Still a prefix once punctuated, or under the style that emits it bare.
+    expect(parsePrefix("2024. Roadmap")).toEqual({ path: ["2024"], rest: "Roadmap", isAppendixForm: false });
+    expect(parsePrefix("2024 Roadmap", { style: "none" })).toEqual({ path: ["2024"], rest: "Roadmap", isAppendixForm: false });
   });
 });
 

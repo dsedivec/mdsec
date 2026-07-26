@@ -9,8 +9,8 @@ const NUMBER_TOKEN_RE = /^(appendix-[a-z]+|(?:[a-z]+(?=\d)|\d+)[a-z0-9]*(?:-\d+)
 // The number currently written in a section's heading, in anchor-slug form
 // ("3.1 Foo" -> "31", "Appendix B. X" -> "appendix-b"), or null if the
 // heading carries no number.
-function oldNumberSlug(s) {
-    const p = parsePrefix(s.oldText);
+function oldNumberSlug(s, style) {
+    const p = parsePrefix(s.oldText, { style });
     if (!p)
         return null;
     const joined = p.path.join("").toLowerCase();
@@ -112,7 +112,7 @@ function resolve(frag, byOldAnchor, model, warnings) {
         const token = tokenMatch[1].startsWith("appendix-")
             ? tokenMatch[1]
             : tokenMatch[1].replace(/-/g, "");
-        const numberMatches = candidates.filter((s) => oldNumberSlug(s) === token);
+        const numberMatches = candidates.filter((s) => oldNumberSlug(s, model.numberStyle) === token);
         if (numberMatches.length === 1) {
             warnings.push(`matched "#${frag}" -> "${numberMatches[0].bareTitle}" by section number`);
             return numberMatches[0];

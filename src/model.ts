@@ -39,6 +39,7 @@ export function buildModel(
 ): DocModel {
   const tree = processor.parse(source) as Root;
   const warnings: string[] = [];
+  const numberStyle = opts.numberStyle ?? "top";
 
   // Collect headings with blockquote ancestry.
   const found: { node: Heading; inBlockquote: boolean }[] = [];
@@ -84,7 +85,7 @@ export function buildModel(
     const textStart = firstChild?.position?.start?.offset ?? node.position!.end.offset!;
     const textEnd = lastChild?.position?.end?.offset ?? textStart;
 
-    const parsed = parsePrefix(oldText);
+    const parsed = parsePrefix(oldText, { style: numberStyle });
     const bareTitle = parsed ? parsed.rest : oldText;
 
     let newPath: string[] | null = null;
@@ -168,7 +169,7 @@ export function buildModel(
     sections,
     minLevel,
     maxLevel,
-    numberStyle: opts.numberStyle ?? "top",
+    numberStyle,
     warnings,
   };
 }

@@ -11,6 +11,7 @@ const processor = unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatte
 export function buildModel(source, opts) {
     const tree = processor.parse(source);
     const warnings = [];
+    const numberStyle = opts.numberStyle ?? "top";
     // Collect headings with blockquote ancestry.
     const found = [];
     (function visit(node, inBq) {
@@ -52,7 +53,7 @@ export function buildModel(source, opts) {
         const lastChild = node.children[node.children.length - 1];
         const textStart = firstChild?.position?.start?.offset ?? node.position.end.offset;
         const textEnd = lastChild?.position?.end?.offset ?? textStart;
-        const parsed = parsePrefix(oldText);
+        const parsed = parsePrefix(oldText, { style: numberStyle });
         const bareTitle = parsed ? parsed.rest : oldText;
         let newPath = null;
         let isAppendix = false;
@@ -129,7 +130,7 @@ export function buildModel(source, opts) {
         sections,
         minLevel,
         maxLevel,
-        numberStyle: opts.numberStyle ?? "top",
+        numberStyle,
         warnings,
     };
 }

@@ -21,8 +21,10 @@ export function letterFor(n) {
 // form (numberStyle "none") requires uppercase so ordinary words after
 // "Appendix" ("Appendix on Formats") are not mistaken for a letter.
 const APPENDIX_RE = /^[Aa]ppendix\s+(?:([A-Za-z]+)\.|([A-Z]+)(?=\s))\s+(.*)$/;
-const PREFIX_RE = /^([A-Z]+|\d+)((?:\.\d+)*)\.?\s+(.*)$/;
-export function parsePrefix(title) {
+// 1: leading token, 2: ".2.3" sub-numbers, 3: trailing period, 4: rest.
+const PREFIX_RE = /^([A-Z]+|\d+)((?:\.\d+)*)(\.?)\s+(.*)$/;
+export function parsePrefix(title, opts = {}) {
+    const style = opts.style ?? "top";
     const a = title.match(APPENDIX_RE);
     if (a) {
         const letter = (a[1] ?? a[2]).toUpperCase();
@@ -31,11 +33,20 @@ export function parsePrefix(title) {
     const m = title.match(PREFIX_RE);
     if (!m)
         return null;
+    const [, head, subNumbers, trailingDot, rest] = m;
+    const bare = subNumbers === "" && trailingDot === "";
     // Reject "Appendix on Formats"-style: a bare word is not matched by the
     // regex anyway; but reject single letters followed by no dot-number and
     // no trailing dot, e.g. "A Title" is a normal title, not prefix "A".
-    if (/^[A-Z]+$/i.test(m[1]) && m[2] === "" && !title.startsWith(`${m[1]}.`))
+    if (/^[A-Z]+$/i.test(head) && bare)
         return null;
-    const path = [m[1], ...m[2].split(".").filter(Boolean)];
-    return { path, rest: m[3], isAppendixForm: false };
+    // A bare digit run ("2024 Roadmap", "10 Things I Learned") is only
+    // something we emit under numberStyle "none"; under the dotted styles the
+    // leading digits are far likelier to be part of the real title, and
+    // stripping them silently deletes content. Only trust the bare form when
+    // the configured style could have produced it.
+    if (/^\d+$/.test(head) && bare && style !== "none")
+        return null;
+    const path = [head, ...subNumbers.split(".").filter(Boolean)];
+    return { path, rest, isAppendixForm: false };
 }

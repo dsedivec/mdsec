@@ -81,6 +81,26 @@ mode: subsequent top-level sections are lettered (`Appendix A.`, `Appendix
 B.`, ...) instead of numbered, and their sub-levels use the letter (`A.1`,
 `A.1.1`).
 
+## Recognizing existing number prefixes
+
+Before numbering a heading, `mdsec` strips whatever number prefix it already
+carries, so re-runs replace the old number instead of stacking a new one in
+front of it. A prefix is only recognized in a form the configured
+`--number-style` could itself have written:
+
+- `18. Foo`, `18.1 Foo`, `18.1. Foo`, `A.1 Foo`, `Appendix B. Foo` — always
+  recognized.
+- `18 Foo` (bare number, no period, no sub-numbers) — recognized only under
+  `--number-style none`, which is the only style that emits that form.
+
+That second rule is what keeps `## 2024 Roadmap` and `## 10 Things I Learned`
+intact under the default style, instead of being rewritten to `## 1. Roadmap`
+and `## 2. Things I Learned`. The cost is that a document already numbered in
+the bare `none` style needs `--number-style none` (or a one-time manual fixup)
+when converting to a dotted style; otherwise the old numbers are treated as
+title text and you get `## 1. 18 Foo`. `--diff` will show this before you
+write.
+
 ## Table of contents
 
 Add a placeholder anywhere in the document:

@@ -2,7 +2,7 @@ import GithubSlugger from "github-slugger";
 import type { DocModel, Section } from "./model.js";
 import type { Edit } from "./edits.js";
 import { computeNewAnchors } from "./renumber.js";
-import { formatNumber, parsePrefix } from "./number.js";
+import { formatNumber, parsePrefix, type NumberStyle } from "./number.js";
 
 const DEFAULT_TEXT_RE =
   /(§\s*|\bsections?\s+)([A-Z]+(?:\.\d+)+|[A-Z]+(?=[\s.):]|$)|\d+(?:\.\d+)*)|^([A-Za-z]+\.\d+(?:\.\d+)*|\d+(?:\.\d+)*)(?=[\s.):]|$)/;
@@ -16,8 +16,8 @@ const NUMBER_TOKEN_RE =
 // The number currently written in a section's heading, in anchor-slug form
 // ("3.1 Foo" -> "31", "Appendix B. X" -> "appendix-b"), or null if the
 // heading carries no number.
-function oldNumberSlug(s: Section): string | null {
-  const p = parsePrefix(s.oldText);
+function oldNumberSlug(s: Section, style: NumberStyle): string | null {
+  const p = parsePrefix(s.oldText, { style });
   if (!p) return null;
   const joined = p.path.join("").toLowerCase();
   return p.isAppendixForm ? `appendix-${joined}` : joined;
@@ -141,7 +141,9 @@ function resolve(
     const token = tokenMatch[1].startsWith("appendix-")
       ? tokenMatch[1]
       : tokenMatch[1].replace(/-/g, "");
-    const numberMatches = candidates.filter((s) => oldNumberSlug(s) === token);
+    const numberMatches = candidates.filter(
+      (s) => oldNumberSlug(s, model.numberStyle) === token,
+    );
     if (numberMatches.length === 1) {
       warnings.push(
         `matched "#${frag}" -> "${numberMatches[0].bareTitle}" by section number`,

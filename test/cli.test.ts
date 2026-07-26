@@ -197,4 +197,16 @@ describe("cli", () => {
     const r = run(["--diff", "--strict"], "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n");
     expect(r.status).toBe(1);
   });
+
+  it("keeps a bare leading number that is part of the title", () => {
+    const r = run([], "# T\n\n## 2024 Roadmap\n\n## 10 Things I Learned\n");
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("# T\n\n## 1. 2024 Roadmap\n\n## 2. 10 Things I Learned\n");
+  });
+
+  it("--number-style none round-trips its own bare numbering", () => {
+    const once = run(["--number-style", "none"], "# T\n\n## Alpha\n\n### Sub\n").stdout;
+    expect(once).toBe("# T\n\n## 1 Alpha\n\n### 1.1 Sub\n");
+    expect(run(["--number-style", "none"], once).stdout).toBe(once);
+  });
 });
