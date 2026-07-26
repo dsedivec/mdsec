@@ -6,6 +6,9 @@ links and a table of contents in sync as you reorder or edit.
 ## What it does
 
 - Numbers headings within a chosen level range (`1.`, `1.1`, `1.1.1`, ...).
+  This applies to documents that never used section numbers too: `mdsec` adds
+  numbering rather than only renumbering what is already there. Use `--diff`
+  to see what a run would do before writing anything.
 - Detects and letters "Appendix" sections separately (`Appendix A.`, `A.1`, ...).
 - Rewrites internal links whose fragment or text refers to a renumbered
   section — both exact anchor matches and "fuzzy" text like `[section 3.1]`
@@ -22,30 +25,53 @@ links and a table of contents in sync as you reorder or edit.
 ## Install
 
 ```sh
-npm install && npm run build
+npm install -g github:dsedivec/mdsec
 ```
+
+That puts an `mdsec` binary on your `PATH`. To run it without installing:
+
+```sh
+npx --package github:dsedivec/mdsec mdsec doc.md
+```
+
+Both accept a `#<tag-or-commit>` suffix to pin a version, and
+`git+ssh://git@github.com/dsedivec/mdsec.git` instead if you clone over SSH.
+
+See [Development](#development) to work on `mdsec` itself.
 
 ## Usage
 
 ```sh
+# preview pending changes as a unified diff, writing nothing
+mdsec -d doc.md
+
 # print renumbered document to stdout
-npm run mdsec -- doc.md
+mdsec doc.md
 
 # rewrite the file in place
-npm run mdsec -- -w doc.md
+mdsec -w doc.md
 
 # CI / pre-commit: fail if the file would change, without writing
-npm run mdsec -- --check doc.md
+mdsec --check doc.md
 ```
 
 Example pre-commit hook:
 
 ```sh
-npm run mdsec -- --check "$file" || {
+mdsec --check "$file" || {
   echo "run: mdsec -w $file"
   exit 1
 }
 ```
+
+## Exit status
+
+- `0` — success; with `--check` or `--diff`, no changes are pending
+- `1` — with `--check` or `--diff`, changes are pending (or `--strict` and
+  there were warnings)
+- `2` — usage error, unreadable file, or bad config
+
+Warnings go to stderr; `--check` and `--diff` never modify files.
 
 ## Options
 
@@ -133,6 +159,17 @@ repos:
 The `mdsec` hook rewrites staged Markdown files in place (the commit fails
 so you can restage the changes); use `id: mdsec-check` instead for a
 verify-only hook that never modifies files.
+
+## Development
+
+From a checkout:
+
+```sh
+npm install
+npm run build        # tsc -> dist/ (dist/ is committed)
+npm test             # vitest
+npm run mdsec -- -d doc.md   # run from source without installing
+```
 
 ## Releasing
 
