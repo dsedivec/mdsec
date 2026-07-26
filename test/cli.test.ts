@@ -209,4 +209,13 @@ describe("cli", () => {
     expect(once).toBe("# T\n\n## 1 Alpha\n\n### 1.1 Sub\n");
     expect(run(["--number-style", "none"], once).stdout).toBe(once);
   });
+
+  it("--help documents exit status and the mutating default", () => {
+    const r = run(["--help"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/Exit status:/);
+    expect(r.stdout).toMatch(/ADDS numbering/);
+    expect(r.stdout).toMatch(/idempotent/);
+    expect(r.stdout).toMatch(/<!-- toc -->/);
+  });
 });

@@ -9,9 +9,15 @@ import { unifiedDiff } from "./diff.js";
 
 const HELP = `Usage: mdsec [options] [FILE...]
 
-Renumber Markdown sections, update internal links, regenerate TOC.
-Reads stdin (or FILE) and writes stdout unless --write.
-Multiple FILEs are allowed with --write, --check, or --diff.
+Renumber Markdown section headings (1., 1.1, Appendix A., ...), update
+internal links, and regenerate a table of contents.
+
+Reads stdin (or FILE) and writes stdout unless --write. Multiple FILEs are
+allowed with --write, --check, or --diff.
+
+By default mdsec ADDS numbering to headings that have none, so it changes
+documents that never used section numbers. Preview with -d before writing.
+Output is idempotent: running twice gives the same result as running once.
 
 Options:
   -w, --write               modify FILE in place
@@ -19,7 +25,10 @@ Options:
   -d, --diff                print a unified diff of pending changes;
                             exits like --check
       --strict              with --check, warnings also cause exit 1
-      --min-level N         lowest heading level to number (default: inferred)
+      --min-level N         lowest heading level to number (default: 1 if the
+                            document has a front-matter title: key or more
+                            than one H1, else 2, treating a lone H1 as the
+                            document title)
       --max-level N         highest heading level to number (default: 6)
       --number-style S      trailing periods: none (18.1), top (18. and
                             18.1; default), all (18.1.)
@@ -30,6 +39,26 @@ Options:
   -v, --verbose             report warnings verbosely
   -V, --version             show version and exit
   -h, --help                show this help
+
+Exit status:
+  0  success; with --check or --diff, no changes are pending
+  1  with --check or --diff, changes are pending (or --strict and warnings)
+  2  usage error, unreadable FILE, or bad config
+
+Examples:
+  mdsec -d doc.md            preview pending changes, exit 1 if any
+  mdsec -w doc.md            rewrite in place
+  mdsec --check docs/*.md    CI gate; writes nothing
+  mdsec < doc.md > out.md    filter stdin to stdout
+
+Notes:
+  A table of contents is written only between <!-- toc --> and <!-- /toc -->
+  markers. Without the markers, no TOC is generated.
+  Headings inside blockquotes and code blocks are left alone.
+  A leading bare number is treated as an existing section number only under
+  --number-style none, so "## 2024 Roadmap" keeps its year by default.
+  Defaults may be set in .mdsec.json, searched upward from FILE's directory:
+  minLevel, maxLevel, numberStyle, tocDepth, tocTitle, linkTextPattern.
 `;
 
 function fail(msg: string): never {
