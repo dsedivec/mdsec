@@ -54,7 +54,8 @@ describe("toc", () => {
     expect(r.warnings.some((w) => /toc/i.test(w))).toBe(true);
   });
   it("escapes brackets and backslashes in TOC labels", () => {
-    const src = "# T\n\n<!-- toc -->\n\n<!-- /toc -->\n\n## Caching [fast] stuff\n";
+    const src =
+      "# T\n\n<!-- toc -->\n\n<!-- /toc -->\n\n## Caching [fast] stuff\n";
     const r = runDocument(src, {});
     expect(r.output).toContain("Caching \\[fast\\] stuff");
   });

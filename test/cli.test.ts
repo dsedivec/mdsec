@@ -60,7 +60,10 @@ describe("cli", () => {
     expect(run(["--check"], "# T\n\n## 1. Alpha\n").status).toBe(0);
   });
   it("--check --strict fails on warnings", () => {
-    const r = run(["--check", "--strict"], "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n");
+    const r = run(
+      ["--check", "--strict"],
+      "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n",
+    );
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/unresolved/);
   });
@@ -84,7 +87,10 @@ describe("cli", () => {
     expect(bad.stderr).toMatch(/numberStyle/);
   });
   it("--number-style converts between styles idempotently", () => {
-    const once = run(["--number-style", "all"], "# T\n\n## 1. Alpha\n\n### 1.1 Sub\n").stdout;
+    const once = run(
+      ["--number-style", "all"],
+      "# T\n\n## 1. Alpha\n\n### 1.1 Sub\n",
+    ).stdout;
     expect(once).toBe("# T\n\n## 1. Alpha\n\n### 1.1. Sub\n");
     expect(run(["--number-style", "all"], once).stdout).toBe(once);
   });
@@ -194,18 +200,26 @@ describe("cli", () => {
   });
 
   it("--diff --strict exits 1 on warnings even without changes", () => {
-    const r = run(["--diff", "--strict"], "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n");
+    const r = run(
+      ["--diff", "--strict"],
+      "# T\n\n## 1. Alpha\n\n[x](#zzzz-qqqq)\n",
+    );
     expect(r.status).toBe(1);
   });
 
   it("keeps a bare leading number that is part of the title", () => {
     const r = run([], "# T\n\n## 2024 Roadmap\n\n## 10 Things I Learned\n");
     expect(r.status).toBe(0);
-    expect(r.stdout).toBe("# T\n\n## 1. 2024 Roadmap\n\n## 2. 10 Things I Learned\n");
+    expect(r.stdout).toBe(
+      "# T\n\n## 1. 2024 Roadmap\n\n## 2. 10 Things I Learned\n",
+    );
   });
 
   it("--number-style none round-trips its own bare numbering", () => {
-    const once = run(["--number-style", "none"], "# T\n\n## Alpha\n\n### Sub\n").stdout;
+    const once = run(
+      ["--number-style", "none"],
+      "# T\n\n## Alpha\n\n### Sub\n",
+    ).stdout;
     expect(once).toBe("# T\n\n## 1 Alpha\n\n### 1.1 Sub\n");
     expect(run(["--number-style", "none"], once).stdout).toBe(once);
   });
