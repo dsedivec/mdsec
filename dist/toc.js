@@ -67,7 +67,13 @@ export function tocEdits(model, source, opts = {}) {
     return {
         // Trailing blank line keeps the closing marker a separate block: some
         // editors (e.g. Typora) otherwise indent it into the last list item.
-        edits: [{ start, end, replacement: `\n${heading}${lines.join("\n")}\n\n` }],
+        // Leading blank line keeps the opening marker a separate block too, which
+        // is also what Prettier produces — without it the two tools disagree
+        // permanently and neither `mdsec --check` nor `prettier --check` can pass
+        // on the same file.
+        edits: [
+            { start, end, replacement: `\n\n${heading}${lines.join("\n")}\n\n` },
+        ],
         warnings,
         region,
     };

@@ -1,6 +1,7 @@
 # Title
 
 <!-- toc -->
+
 ## Table of Contents
 
 - [1. Beta](#1-beta)
